@@ -1,0 +1,16 @@
+# Node & NextJS
+node_modules/
+.next/
+out/
+.env*.local
+
+# Golang
+/backend/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Môi trường
+.env

@@ -1,6 +1,13 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/PhamGiaKhang2906/sales-management-backend/initializers"
+	"github.com/gin-gonic/gin"
+)
+
+func init() {
+	initializers.LoadEnv()
+}
 
 func main() {
 	r := gin.Default()

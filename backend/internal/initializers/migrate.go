@@ -16,5 +16,7 @@ func SyncDatabase() {
 		&models.Order{},
 		&models.OrderItem{},
 		&models.Invoice{},
+		&models.Store{},
+		&models.StoreType{},
 	)
 }

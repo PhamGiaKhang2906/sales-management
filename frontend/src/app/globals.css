@@ -2,20 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-be-vietnam-pro), sans-serif;
+  min-height: 100vh;
+}
+
+button:hover {
+  background-color: rgb(34 197 94) !important;
+  border-color: rgb(34 197 94) !important;
+  color: #ffffff !important;
+}
+
+button:hover svg {
+  color: #ffffff !important;
+}
+
+::selection {
+  background: rgba(34, 197, 94, 0.2);
+  color: #0f172a;
 }

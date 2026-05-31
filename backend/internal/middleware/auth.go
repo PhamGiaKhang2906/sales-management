@@ -8,25 +8,35 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AuthMiddleware checks JWT token in request header
+// AuthMiddleware checks JWT token from Authorization header or cookie
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var tokenString string
+
+		// Try to get token from Authorization header first
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			utils.ErrorResponse(c, http.StatusUnauthorized, "Token không tồn tại")
-			c.Abort()
-			return
+		if authHeader != "" {
+			// Extract token from "Bearer <token>"
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				tokenString = parts[1]
+			} else {
+				utils.ErrorResponse(c, http.StatusUnauthorized, "Token không hợp lệ")
+				c.Abort()
+				return
+			}
+		} else {
+			// Try to get token from cookie
+			var err error
+			tokenString, err = c.Cookie("token")
+			if err != nil {
+				utils.ErrorResponse(c, http.StatusUnauthorized, "Token không tồn tại")
+				c.Abort()
+				return
+			}
 		}
 
-		// Extract token from "Bearer <token>"
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			utils.ErrorResponse(c, http.StatusUnauthorized, "Token không hợp lệ")
-			c.Abort()
-			return
-		}
-
-		tokenString := parts[1]
+		// Verify token
 		claims, err := utils.VerifyToken(tokenString)
 		if err != nil {
 			utils.ErrorResponse(c, http.StatusUnauthorized, "Token không hợp lệ hoặc đã hết hạn")

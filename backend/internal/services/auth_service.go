@@ -125,3 +125,50 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.RegisterResponse,
 
 	return response, nil
 }
+
+// Login handles user login
+func (s *AuthService) Login(req *dto.LoginRequest) (*dto.LoginResponse, error) {
+	// Validate input
+	if req.Username == "" {
+		return nil, errors.New("Tên đăng nhập không được để trống")
+	}
+
+	if req.Password == "" {
+		return nil, errors.New("Mật khẩu không được để trống")
+	}
+
+	if req.Phone == "" {
+		return nil, errors.New("Số điện thoại không được để trống")
+	}
+
+	// Get user by username
+	user, err := s.userRepo.GetUserByUsername(req.Username)
+	if err != nil {
+		return nil, errors.New("Tên đăng nhập hoặc mật khẩu không đúng")
+	}
+
+	// Check if phone matches
+	if user.Phone != req.Phone {
+		return nil, errors.New("Tên đăng nhập hoặc số điện thoại không đúng")
+	}
+
+	// Check if account is active
+	if user.Status != "active" {
+		return nil, errors.New("Tài khoản đã bị khóa hoặc không hoạt động")
+	}
+
+	// Check password
+	if !utils.CheckPassword(req.Password, user.Password) {
+		return nil, errors.New("Tên đăng nhập hoặc mật khẩu không đúng")
+	}
+
+	// Return success response
+	response := &dto.LoginResponse{
+		UserID:   user.ID,
+		Username: user.Username,
+		RoleID:   user.RoleID,
+		Message:  "Đăng nhập thành công",
+	}
+
+	return response, nil
+}

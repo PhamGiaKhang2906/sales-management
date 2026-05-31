@@ -25,7 +25,7 @@ func AuthRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	{
 		// Public routes
 		auth.POST("/register", authCtrl.Register)
-		// auth.POST("/login", authCtrl.Login)          // Future
+		auth.POST("/login", authCtrl.Login)
 		// auth.POST("/logout", authCtrl.Logout)        // Future
 		// auth.POST("/refresh-token", authCtrl.Refresh) // Future
 	}

@@ -153,7 +153,7 @@ func (s *AuthService) Login(req *dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 
 	// Check if account is active
-	if user.Status != "active" {
+	if user.Status != "Đã_duyệt" {
 		return nil, errors.New("Tài khoản đã bị khóa hoặc không hoạt động")
 	}
 

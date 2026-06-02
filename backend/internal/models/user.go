@@ -10,7 +10,7 @@ type User struct {
 	Role     *Role  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
 	StoreID  *uint  `gorm:"index"`
 	Store    *Store `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	Status   string `gorm:"size:30;default:'active'"`
+	Status   string `gorm:"size:30;default:'Chờ_duyệt'"`
 	Employee *Employee
 	Orders   []Order
 }

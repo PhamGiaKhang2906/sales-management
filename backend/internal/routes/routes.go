@@ -18,6 +18,12 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protectedAPI := r.Group("/api")
 	protectedAPI.Use(middleware.AuthMiddleware())
 	{
+		// Admin routes (account management, statistics)
+		AdminRoutes(protectedAPI, db)
+
+		// Owner routes (suppliers, categories)
+		OwnerRoutes(protectedAPI, db)
+
 		// User routes (profile, etc.)
 		// UserRoutes(protectedAPI, db)
 

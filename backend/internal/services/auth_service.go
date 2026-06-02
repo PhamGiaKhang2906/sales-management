@@ -110,7 +110,7 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.RegisterResponse,
 		Phone:    req.Phone,
 		RoleID:   role.ID,
 		StoreID:  &store.ID,
-		Status:   "active",
+		Status:   "Chờ_duyệt",
 	}
 
 	if err := s.userRepo.CreateUser(user); err != nil {

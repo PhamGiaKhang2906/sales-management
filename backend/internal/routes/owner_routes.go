@@ -39,5 +39,6 @@ func OwnerRoutes(r *gin.RouterGroup, db *gorm.DB) {
 		owner.DELETE("/categories/:id", categoryCtrl.DeleteCategory)
 	}
 
+	CustomerRoutes(owner, db)
 	ProductRoutes(owner, db)
 }

@@ -21,8 +21,11 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		// Admin routes (account management, statistics)
 		AdminRoutes(protectedAPI, db)
 
-		// Owner routes (suppliers, categories)
+		// Owner routes (suppliers, categories, customers)
 		OwnerRoutes(protectedAPI, db)
+
+		// Sales routes (customers)
+		SalesRoutes(protectedAPI, db)
 
 		// User routes (profile, etc.)
 		// UserRoutes(protectedAPI, db)

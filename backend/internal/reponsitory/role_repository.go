@@ -27,7 +27,7 @@ func (r *RoleRepository) GetRoleByName(name string) (*models.Role, error) {
 // GetDefaultRole retrieves the default role (usually customer)
 func (r *RoleRepository) GetDefaultRole() (*models.Role, error) {
 	var role models.Role
-	result := r.DB.Where("role_name = ?", "customer").First(&role)
+	result := r.DB.Where("role_name = ?", "owner").First(&role)
 	if result.Error != nil {
 		return nil, result.Error
 	}

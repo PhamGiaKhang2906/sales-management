@@ -49,6 +49,16 @@ func (r *UserRepository) GetUserByUsername(username string) (*models.User, error
 	return &user, nil
 }
 
+// GetUserByID retrieves a user by ID.
+func (r *UserRepository) GetUserByID(id uint) (*models.User, error) {
+	var user models.User
+	result := r.DB.First(&user, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &user, nil
+}
+
 // GetAllAccounts retrieves all users with their store and store type information
 func (r *UserRepository) GetAllAccounts() ([]map[string]interface{}, error) {
 	var accounts []map[string]interface{}

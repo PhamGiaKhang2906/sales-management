@@ -5,6 +5,14 @@ import (
 	"gorm.io/gorm"
 )
 
+type ProductFilters struct {
+	Search      string
+	ID          *uint
+	CategoryID  *uint
+	SupplierID  *uint
+	StockStatus string
+}
+
 type ProductRepository struct {
 	DB *gorm.DB
 }
@@ -18,6 +26,43 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 func (r *ProductRepository) GetAllProducts() ([]models.Product, error) {
 	var products []models.Product
 	result := r.DB.Preload("Category").Preload("Supplier").Preload("Inventory").Order("id DESC").Find(&products)
+	return products, result.Error
+}
+
+// SearchProducts retrieves products using search and filter conditions.
+func (r *ProductRepository) SearchProducts(filters ProductFilters) ([]models.Product, error) {
+	query := r.DB.Model(&models.Product{}).
+		Distinct("products.id").
+		Preload("Category").
+		Preload("Supplier").
+		Preload("Inventory").
+		Joins("LEFT JOIN inventories ON inventories.product_id = products.id")
+
+	if filters.ID != nil {
+		query = query.Where("products.id = ?", *filters.ID)
+	}
+
+	if filters.CategoryID != nil {
+		query = query.Where("products.category_id = ?", *filters.CategoryID)
+	}
+
+	if filters.SupplierID != nil {
+		query = query.Where("products.supplier_id = ?", *filters.SupplierID)
+	}
+
+	if filters.Search != "" {
+		query = query.Where("products.name ILIKE ? OR products.sku ILIKE ? OR CAST(products.id AS TEXT) = ?", "%"+filters.Search+"%", "%"+filters.Search+"%", filters.Search)
+	}
+
+	switch filters.StockStatus {
+	case "in":
+		query = query.Where("COALESCE(inventories.current_stock, 0) > 0")
+	case "out":
+		query = query.Where("COALESCE(inventories.current_stock, 0) = 0")
+	}
+
+	var products []models.Product
+	result := query.Order("products.id DESC").Find(&products)
 	return products, result.Error
 }
 

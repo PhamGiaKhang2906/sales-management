@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/PhamGiaKhang2906/sales-management-backend/internal/controllers"
+	"github.com/PhamGiaKhang2906/sales-management-backend/internal/middleware"
 	repository "github.com/PhamGiaKhang2906/sales-management-backend/internal/reponsitory"
 	"github.com/PhamGiaKhang2906/sales-management-backend/internal/services"
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,7 @@ func OwnerRoutes(r *gin.RouterGroup, db *gorm.DB) {
 
 	// Owner routes group
 	owner := r.Group("/owner")
+	owner.Use(middleware.OwnerOnlyMiddleware(db))
 	{
 		// Supplier management routes
 		owner.GET("/suppliers", supplierCtrl.GetAllSuppliers)
@@ -36,4 +38,6 @@ func OwnerRoutes(r *gin.RouterGroup, db *gorm.DB) {
 		owner.PUT("/categories/:id", categoryCtrl.UpdateCategory)
 		owner.DELETE("/categories/:id", categoryCtrl.DeleteCategory)
 	}
+
+	ProductRoutes(owner, db)
 }

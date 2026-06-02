@@ -13,11 +13,12 @@ type Claims struct {
 	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
 	RoleID   uint   `json:"role_id"`
+	StoreID  uint   `json:"store_id"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken generates a JWT token for a user
-func GenerateToken(userID uint, username string, roleID uint) (string, error) {
+func GenerateToken(userID uint, username string, roleID uint, storeID uint) (string, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "your-secret-key-change-this"
@@ -28,6 +29,7 @@ func GenerateToken(userID uint, username string, roleID uint) (string, error) {
 		UserID:   userID,
 		Username: username,
 		RoleID:   roleID,
+		StoreID:  storeID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},

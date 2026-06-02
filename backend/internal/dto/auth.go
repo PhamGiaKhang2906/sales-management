@@ -28,5 +28,6 @@ type LoginResponse struct {
 	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
 	RoleID   uint   `json:"role_id"`
+	StoreID  uint   `json:"store_id"`
 	Message  string `json:"message"`
 }

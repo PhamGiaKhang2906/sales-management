@@ -105,3 +105,13 @@ func (r *UserRepository) GetTotalAccountsCount() (int64, error) {
 func (r *UserRepository) UpdateUserStatus(userID uint, status string) error {
 	return r.DB.Model(&models.User{}).Where("id = ?", userID).Update("status", status).Error
 }
+
+// UpdateUser updates an existing user with all fields
+func (r *UserRepository) UpdateUser(user *models.User) error {
+	return r.DB.Model(user).Updates(user).Error
+}
+
+// DeleteUser deletes a user by ID
+func (r *UserRepository) DeleteUser(userID uint) error {
+	return r.DB.Delete(&models.User{}, userID).Error
+}

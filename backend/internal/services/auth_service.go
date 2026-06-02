@@ -163,10 +163,15 @@ func (s *AuthService) Login(req *dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 
 	// Return success response
+	storeID := uint(0)
+	if user.StoreID != nil {
+		storeID = *user.StoreID
+	}
 	response := &dto.LoginResponse{
 		UserID:   user.ID,
 		Username: user.Username,
 		RoleID:   user.RoleID,
+		StoreID:  storeID,
 		Message:  "Đăng nhập thành công",
 	}
 

@@ -119,3 +119,51 @@ type CategoriesListResponse struct {
 	Categories []CategoryResponse `json:"categories"`
 	Total      int                `json:"total"`
 }
+
+// ===== Employee DTOs =====
+
+// EmployeeCreateRequest represents request to create an employee
+type EmployeeCreateRequest struct {
+	Fullname     string  `json:"fullname" binding:"required,min=1,max=100"`
+	Username     string  `json:"username" binding:"required,min=5,max=50"`
+	Password     string  `json:"password" binding:"required,min=6,max=100"`
+	Phone        string  `json:"phone" binding:"required,min=10,max=20"`
+	CCCD         string  `json:"cccd" binding:"max=20"`
+	Address      string  `json:"address" binding:"max=255"`
+	Birthday     *string `json:"birthday"`                      // Format: YYYY-MM-DD
+	SalaryFactor float64 `json:"salary_factor" binding:"min=0"` // Default: 1.00
+	WorkShift    string  `json:"work_shift" binding:"max=100"`
+}
+
+// EmployeeUpdateRequest represents request to update an employee
+type EmployeeUpdateRequest struct {
+	Fullname     string  `json:"fullname" binding:"required,min=1,max=100"`
+	Phone        string  `json:"phone" binding:"required,min=10,max=20"`
+	CCCD         string  `json:"cccd" binding:"max=20"`
+	Address      string  `json:"address" binding:"max=255"`
+	Birthday     *string `json:"birthday"` // Format: YYYY-MM-DD
+	SalaryFactor float64 `json:"salary_factor" binding:"min=0"`
+	WorkShift    string  `json:"work_shift" binding:"max=100"`
+}
+
+// EmployeeResponse represents an employee in response
+type EmployeeResponse struct {
+	ID           uint    `json:"id"`
+	UserID       uint    `json:"user_id"`
+	Username     string  `json:"username"`
+	Fullname     string  `json:"fullname"`
+	Phone        string  `json:"phone"`
+	CCCD         string  `json:"cccd"`
+	Address      string  `json:"address"`
+	Birthday     *string `json:"birthday"`
+	SalaryFactor float64 `json:"salary_factor"`
+	WorkShift    string  `json:"work_shift"`
+	Status       string  `json:"status"`
+	CreatedAt    string  `json:"created_at"`
+}
+
+// EmployeesListResponse represents a list of employees
+type EmployeesListResponse struct {
+	Employees []EmployeeResponse `json:"employees"`
+	Total     int                `json:"total"`
+}

@@ -66,7 +66,7 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 	}
 
 	// Generate JWT token
-	token, err := utils.GenerateToken(response.UserID, response.Username, response.RoleID)
+	token, err := utils.GenerateToken(response.UserID, response.Username, response.RoleID, response.StoreID)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Lỗi khi tạo token")
 		return

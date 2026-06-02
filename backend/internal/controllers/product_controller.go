@@ -23,7 +23,24 @@ func NewProductController(productService *services.ProductService) *ProductContr
 
 // GetAllProducts retrieves all products
 func (ctrl *ProductController) GetAllProducts(c *gin.Context) {
-	response, err := ctrl.productService.GetAllProducts()
+	search := c.Query("search")
+	idParam := c.Query("id")
+	categoryID := c.Query("category_id")
+	supplierID := c.Query("supplier_id")
+	stockStatus := c.Query("stock_status")
+
+	if search == "" && idParam == "" && categoryID == "" && supplierID == "" && stockStatus == "" {
+		response, err := ctrl.productService.GetAllProducts()
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		utils.SuccessResponse(c, http.StatusOK, "Lấy danh sách sản phẩm thành công", response)
+		return
+	}
+
+	response, err := ctrl.productService.SearchProducts(search, idParam, categoryID, supplierID, stockStatus)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return

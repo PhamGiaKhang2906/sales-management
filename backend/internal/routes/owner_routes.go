@@ -16,16 +16,19 @@ func OwnerRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	employeeRepo := repository.NewEmployeeRepository(db)
 	userRepo := repository.NewUserRepository(db)
 	roleRepo := repository.NewRoleRepository(db)
+	storeRepo := repository.NewStoreRepository(db)
 
 	// Initialize services
 	supplierService := services.NewSupplierService(supplierRepo)
 	categoryService := services.NewCategoryService(categoryRepo)
 	employeeService := services.NewEmployeeService(employeeRepo, userRepo, roleRepo)
+	storeService := services.NewStoreService(storeRepo, userRepo)
 
 	// Initialize controllers
 	supplierCtrl := controllers.NewSupplierController(supplierService)
 	categoryCtrl := controllers.NewCategoryController(categoryService)
 	employeeCtrl := controllers.NewEmployeeController(employeeService)
+	storeCtrl := controllers.NewStoreController(storeService)
 
 	// Owner routes group
 	owner := r.Group("/owner")
@@ -48,6 +51,9 @@ func OwnerRoutes(r *gin.RouterGroup, db *gorm.DB) {
 		owner.POST("/employees", employeeCtrl.CreateEmployee)
 		owner.PUT("/employees/:id", employeeCtrl.UpdateEmployee)
 		owner.DELETE("/employees/:id", employeeCtrl.DeleteEmployee)
+		// Store info routes (owner's own store)
+		owner.GET("/store", storeCtrl.GetMyStore)
+		owner.PUT("/store", storeCtrl.UpdateMyStore)
 	}
 
 	CustomerRoutes(owner, db)

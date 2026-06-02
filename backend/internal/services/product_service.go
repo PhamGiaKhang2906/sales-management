@@ -2,6 +2,8 @@ package services
 
 import (
 	"errors"
+	"strconv"
+	"strings"
 
 	"github.com/PhamGiaKhang2906/sales-management-backend/internal/dto"
 	"github.com/PhamGiaKhang2906/sales-management-backend/internal/models"
@@ -29,6 +31,56 @@ func (s *ProductService) GetAllProducts() (*dto.ProductsListResponse, error) {
 	products, err := s.productRepo.GetAllProducts()
 	if err != nil {
 		return nil, errors.New("Lỗi khi lấy danh sách sản phẩm")
+	}
+
+	responses := make([]dto.ProductResponse, 0, len(products))
+	for _, product := range products {
+		responses = append(responses, s.toProductResponse(&product))
+	}
+
+	return &dto.ProductsListResponse{
+		Products: responses,
+		Total:    len(responses),
+	}, nil
+}
+
+// SearchProducts retrieves products using search and filter criteria.
+func (s *ProductService) SearchProducts(search string, idParam string, categoryIDParam string, supplierIDParam string, stockStatus string) (*dto.ProductsListResponse, error) {
+	filters := repository.ProductFilters{
+		Search:      strings.TrimSpace(search),
+		StockStatus: strings.ToLower(strings.TrimSpace(stockStatus)),
+	}
+
+	if idParam != "" {
+		id, err := strconv.ParseUint(idParam, 10, 32)
+		if err != nil {
+			return nil, errors.New("ID sản phẩm không hợp lệ")
+		}
+		parsedID := uint(id)
+		filters.ID = &parsedID
+	}
+
+	if categoryIDParam != "" {
+		categoryID, err := strconv.ParseUint(categoryIDParam, 10, 32)
+		if err != nil {
+			return nil, errors.New("ID danh mục không hợp lệ")
+		}
+		parsedCategoryID := uint(categoryID)
+		filters.CategoryID = &parsedCategoryID
+	}
+
+	if supplierIDParam != "" {
+		supplierID, err := strconv.ParseUint(supplierIDParam, 10, 32)
+		if err != nil {
+			return nil, errors.New("ID nhà cung cấp không hợp lệ")
+		}
+		parsedSupplierID := uint(supplierID)
+		filters.SupplierID = &parsedSupplierID
+	}
+
+	products, err := s.productRepo.SearchProducts(filters)
+	if err != nil {
+		return nil, errors.New("Lỗi khi tìm kiếm sản phẩm")
 	}
 
 	responses := make([]dto.ProductResponse, 0, len(products))

@@ -42,9 +42,24 @@ func (r *StoreRepository) CreateStore(store *models.Store) error {
 // GetStoreByID retrieves a store by ID
 func (r *StoreRepository) GetStoreByID(id uint) (*models.Store, error) {
 	var store models.Store
-	result := r.DB.First(&store, id)
+	result := r.DB.Preload("StoreType").First(&store, id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &store, nil
+}
+
+// CheckPhoneExistsExcept checks if phone already exists in Store excluding a specific store.
+func (r *StoreRepository) CheckPhoneExistsExcept(phone string, excludeStoreID uint) (bool, error) {
+	var count int64
+	result := r.DB.Model(&models.Store{}).Where("phone = ? AND id != ?", phone, excludeStoreID).Count(&count)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return count > 0, nil
+}
+
+// UpdateStore updates an existing store.
+func (r *StoreRepository) UpdateStore(store *models.Store) error {
+	return r.DB.Save(store).Error
 }

@@ -36,6 +36,7 @@ func OwnerRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	{
 		// Supplier management routes
 		owner.GET("/suppliers", supplierCtrl.GetAllSuppliers)
+		owner.GET("/suppliers/:id", supplierCtrl.GetSupplier)
 		owner.POST("/suppliers", supplierCtrl.CreateSupplier)
 		owner.PUT("/suppliers/:id", supplierCtrl.UpdateSupplier)
 		owner.DELETE("/suppliers/:id", supplierCtrl.DeleteSupplier)

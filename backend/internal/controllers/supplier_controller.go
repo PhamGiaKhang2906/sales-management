@@ -99,3 +99,23 @@ func (ctrl *SupplierController) DeleteSupplier(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "Xóa nhà cung cấp thành công", nil)
 }
+
+// GetSupplier retrieves a supplier by ID
+func (ctrl *SupplierController) GetSupplier(c *gin.Context) {
+	// Get ID from URL parameter
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "ID nhà cung cấp không hợp lệ")
+		return
+	}
+
+	// Call service
+	response, err := ctrl.supplierService.GetSupplier(uint(id))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Lấy thông tin nhà cung cấp thành công", response)
+}

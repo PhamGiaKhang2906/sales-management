@@ -9,17 +9,14 @@ import (
 	"gorm.io/gorm"
 )
 
-// SalesOnlyMiddleware allows only users with the sales or employee role to access a route group.
+// SalesOnlyMiddleware allows only users with the sales role to access a route group.
 func SalesOnlyMiddleware(db *gorm.DB) gin.HandlerFunc {
 	roleRepo := repository.NewRoleRepository(db)
 	role, err := roleRepo.GetRoleByName("sales")
 	if err != nil {
-		role, err = roleRepo.GetRoleByName("employee")
-		if err != nil {
-			return func(c *gin.Context) {
-				utils.ErrorResponse(c, http.StatusInternalServerError, "Vai trò sales không tồn tại")
-				c.Abort()
-			}
+		return func(c *gin.Context) {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Vai trò sales không tồn tại")
+			c.Abort()
 		}
 	}
 

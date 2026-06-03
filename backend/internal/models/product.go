@@ -6,6 +6,8 @@ type Product struct {
 	Category   Category `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
 	SupplierID uint     `gorm:"not null;index"`
 	Supplier   Supplier `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
+	StoreID    uint     `gorm:"not null;index"`
+	Store      Store    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
 	SKU        string   `gorm:"size:100;not null;uniqueIndex"`
 	Barcode    string   `gorm:"size:100;index"`
 	Name       string   `gorm:"size:255;not null"`

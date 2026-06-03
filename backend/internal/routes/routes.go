@@ -26,17 +26,5 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 
 		// Sales routes (customers)
 		SalesRoutes(protectedAPI, db)
-
-		// User routes (profile, etc.)
-		// UserRoutes(protectedAPI, db)
-
-		// Store routes (CRUD operations)
-		// StoreRoutes(protectedAPI, db)
-
-		// Product routes (CRUD operations)
-		// ProductRoutes(protectedAPI, db)
-
-		// Order routes (CRUD operations)
-		// OrderRoutes(protectedAPI, db)
 	}
 }

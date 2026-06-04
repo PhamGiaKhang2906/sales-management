@@ -49,6 +49,7 @@ func OwnerRoutes(r *gin.RouterGroup, db *gorm.DB) {
 
 		// Employee management routes
 		owner.GET("/employees", employeeCtrl.GetAllEmployees)
+		owner.GET("/employees/:id", employeeCtrl.GetEmployee)
 		owner.POST("/employees", employeeCtrl.CreateEmployee)
 		owner.PUT("/employees/:id", employeeCtrl.UpdateEmployee)
 		owner.DELETE("/employees/:id", employeeCtrl.DeleteEmployee)

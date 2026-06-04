@@ -288,3 +288,33 @@ func (s *EmployeeService) DeleteEmployee(id uint, storeID uint) error {
 
 	return nil
 }
+
+// GetEmployee retrieves an employee by ID
+func (s *EmployeeService) GetEmployee(id uint) (*dto.EmployeeResponse, error) {
+	employee, err := s.employeeRepo.GetEmployeeByID(id)
+	if err != nil {
+		return nil, errors.New("Lỗi khi lấy thông tin nhân viên")
+	}
+
+	birthdayStr := ""
+	if employee.Birthday != nil {
+		birthdayStr = employee.Birthday.Format("2006-01-02")
+	}
+
+	response := &dto.EmployeeResponse{
+		ID:           employee.ID,
+		UserID:       employee.UserID,
+		Username:     employee.User.Username,
+		Fullname:     employee.User.FullName,
+		Phone:        employee.User.Phone,
+		CCCD:         employee.CCCD,
+		Address:      employee.Address,
+		Birthday:     &birthdayStr,
+		SalaryFactor: employee.SalaryFactor,
+		WorkShift:    employee.WorkShift,
+		Status:       employee.User.Status,
+		CreatedAt:    employee.User.CreatedAt.Format("2006-01-02 15:04:05"),
+	}
+
+	return response, nil
+}

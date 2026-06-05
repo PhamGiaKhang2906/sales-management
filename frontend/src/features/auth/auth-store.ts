@@ -2,31 +2,16 @@ export type AuthRole = 'owner' | 'sales' | 'warehouse';
 
 export interface AuthAccount {
   username: string;
-  password: string;
+  name: string; // Add name field
   role: AuthRole;
-  name: string;
-  product?: string;
+  // Removed password and product, as they shouldn't be stored directly in AuthAccount
 }
 
-export interface RegistrationRequest {
-  fullName: string;
-  phone: string;
-  product: string;
-  username: string;
-  password: string;
-  status: 'pending' | 'approved';
-  submittedAt: string;
-}
 
 const AUTH_USER_KEY = 'authUser';
-const REGISTRATION_KEY = 'salesManagementRegistrations';
+// const REGISTRATION_KEY = 'salesManagementRegistrations'; // No longer needed
 
-export const mockAccounts: AuthAccount[] = [
-  { username: 'owner', password: 'owner123', role: 'owner', name: 'Nguyễn Văn Owner' },
-  { username: 'sales', password: 'sales123', role: 'sales', name: 'Trần Thị Sales' },
-  { username: 'warehouse', password: 'warehouse123', role: 'warehouse', name: 'Lê Văn Warehouse' },
-  { username: 'admin', password: 'admin123', role: 'owner', name: 'Quản Trị Viên' },
-];
+
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -47,37 +32,10 @@ function writeJson<T>(key: string, value: T) {
   window.localStorage.setItem(key, JSON.stringify(value));
 }
 
-export function getLoginAccounts() {
-  const registrations = readJson<RegistrationRequest[]>(REGISTRATION_KEY, []);
-  const approvedAccounts = registrations
-    .filter((registration) => registration.status === 'approved')
-    .map<AuthAccount>((registration) => ({
-      username: registration.username,
-      password: registration.password,
-      role: 'sales',
-      name: registration.fullName,
-      product: registration.product,
-    }));
-
-  return [...mockAccounts, ...approvedAccounts];
-}
-
-export function saveRegistrationRequest(request: Omit<RegistrationRequest, 'status' | 'submittedAt'>) {
-  const registrations = readJson<RegistrationRequest[]>(REGISTRATION_KEY, []);
-
-  registrations.unshift({
-    ...request,
-    status: 'pending',
-    submittedAt: new Date().toISOString(),
-  });
-
-  writeJson(REGISTRATION_KEY, registrations);
+export function getAuthUser(): AuthAccount | null {
+  return readJson<AuthAccount | null>(AUTH_USER_KEY, null);
 }
 
 export function storeAuthUser(account: AuthAccount) {
-  writeJson(AUTH_USER_KEY, {
-    username: account.username,
-    name: account.name,
-    role: account.role,
-  });
+  writeJson(AUTH_USER_KEY, account);
 }

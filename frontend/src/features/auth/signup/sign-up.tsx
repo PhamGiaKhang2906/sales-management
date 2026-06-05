@@ -4,40 +4,36 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Eye, EyeOff, Lock, Package, Phone, User, UserRoundPlus } from 'lucide-react';
-import { saveRegistrationRequest } from '@/features/auth/auth-store';
+import { useAuth } from '@/hooks/useAuth';
 
 export function SignUpPage() {
 	const router = useRouter();
+	const { register, isLoading } = useAuth();
 	const [fullName, setFullName] = useState('');
 	const [phone, setPhone] = useState('');
-	const [product, setProduct] = useState('');
+	const [storeType, setStoreType] = useState('');
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [message, setMessage] = useState('');
 
-	const handleSubmit = (event: React.FormEvent) => {
+	const handleSubmit = async (event: React.FormEvent) => {
 		event.preventDefault();
-		setIsSubmitting(true);
 		setMessage('');
 
-		setTimeout(() => {
-			saveRegistrationRequest({
-				fullName,
-				phone,
-				product,
-				username,
-				password,
-			});
+		const result = await register({
+			fullName,
+			phone,
+			store_type: storeType,
+			username,
+			password,
+		});
 
+		if (!result.success) {
+			setMessage(result.message);
+		} else {
 			setMessage('Đã gửi đăng ký. Khi được duyệt, bạn có thể đăng nhập bằng tài khoản này.');
-			setIsSubmitting(false);
-
-			window.setTimeout(() => {
-				router.push('/signin');
-			}, 1400);
-		}, 500);
+		}
 	};
 
 	return (
@@ -87,7 +83,7 @@ export function SignUpPage() {
 							<p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-sky-600">Tạo tài khoản dùng thử miễn phí</p>
 							<h2 className="text-3xl font-bold text-slate-900">Đăng ký tài khoản mới</h2>
 							<p className="mt-3 text-sm leading-6 text-slate-600">
-								Điền thông tin để gửi yêu cầu duyệt tài khoản. Các trường gồm họ tên, số điện thoại, sản phẩm đăng ký bán, user và mật khẩu.
+								Điền thông tin để gửi yêu cầu duyệt tài khoản. Các trường gồm họ tên, số điện thoại, loại hình kinh doanh, user và mật khẩu.
 							</p>
 						</div>
 
@@ -126,16 +122,16 @@ export function SignUpPage() {
 								</div>
 
 								<div className="sm:col-span-2">
-									<label className="mb-2 block text-sm font-semibold text-slate-700">Sản phẩm đăng ký bán</label>
+									<label className="mb-2 block text-sm font-semibold text-slate-700">Loại hình kinh doanh</label>
 									<div className="relative">
 										<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
 											<Package className="h-5 w-5" />
 										</div>
 										<input
-											value={product}
-											onChange={(e) => setProduct(e.target.value)}
+											value={storeType}
+											onChange={(e) => setStoreType(e.target.value)}
 											className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-											placeholder="Ví dụ: Điện máy, mỹ phẩm, thời trang..."
+											placeholder="Ví dụ: Bán lẻ, dịch vụ, nhà hàng..."
 											required
 										/>
 									</div>
@@ -190,11 +186,11 @@ export function SignUpPage() {
 
 								<button
 									type="submit"
-									disabled={isSubmitting}
+									disabled={isLoading}
 									className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-600 px-6 py-3.5 font-semibold text-white shadow-[0_14px_30px_rgba(37,99,235,0.28)] transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
 								>
-									{isSubmitting ? 'Đang gửi...' : 'Tiếp tục'}
-									{!isSubmitting && <ArrowRight className="h-4 w-4" />}
+									{isLoading ? 'Đang gửi...' : 'Tiếp tục'}
+									{!isLoading && <ArrowRight className="h-4 w-4" />}
 								</button>
 							</div>
 						</form>

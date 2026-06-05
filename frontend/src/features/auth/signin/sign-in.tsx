@@ -4,40 +4,25 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight, Eye, EyeOff, Lock, ShieldCheck, User } from 'lucide-react';
-import { getLoginAccounts, storeAuthUser } from '@/features/auth/auth-store';
+import { useAuth } from '@/hooks/useAuth';
 
 export function LoginPage() {
   const router = useRouter();
+  const { login, isLoading } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
 
-    setTimeout(() => {
-      const user = getLoginAccounts().find(
-        u => u.username === username && u.password === password
-      );
-
-      if (user) {
-        storeAuthUser(user);
-
-        const routeByRole: Record<string, string> = {
-          owner: '/owner',
-          sales: '/sales',
-          warehouse: '/warehouse',
-        };
-        router.push(routeByRole[user.role] ?? '/');
-      } else {
-        setError('Tên đăng nhập hoặc mật khẩu không đúng!');
-      }
-      setIsLoading(false);
-    }, 500);
+    const result = await login({ username, password, phone });
+    if (!result.success) {
+      setError(result.message);
+    }
   };
 
   return (
@@ -112,6 +97,23 @@ export function LoginPage() {
                     placeholder="Nhập tên đăng nhập"
                     required
                     autoFocus
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Số điện thoại</label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-12 pr-4 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                    placeholder="Nhập số điện thoại"
+                    required
                   />
                 </div>
               </div>

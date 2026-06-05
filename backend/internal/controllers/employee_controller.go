@@ -101,6 +101,26 @@ func (ctrl *EmployeeController) UpdateEmployee(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Cập nhật nhân viên thành công", response)
 }
 
+// GetEmployee retrieves a single employee by ID for the owner's store
+func (ctrl *EmployeeController) GetEmployee(c *gin.Context) {
+	// Get ID from URL parameter
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "ID nhân viên không hợp lệ")
+		return
+	}
+
+	// Call service
+	response, err := ctrl.employeeService.GetEmployee(uint(id))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Lấy thông tin nhân viên thành công", response)
+}
+
 // DeleteEmployee deletes an employee by ID
 func (ctrl *EmployeeController) DeleteEmployee(c *gin.Context) {
 	// Get store ID from context

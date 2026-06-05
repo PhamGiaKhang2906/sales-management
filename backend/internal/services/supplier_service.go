@@ -156,3 +156,23 @@ func (s *SupplierService) DeleteSupplier(id uint) error {
 
 	return nil
 }
+
+// GetSupplier retrieves a supplier by ID
+func (s *SupplierService) GetSupplier(id uint) (*dto.SupplierResponse, error) {
+	supplier, err := s.supplierRepo.GetSupplierByID(id)
+	if err != nil {
+		return nil, errors.New("Lỗi khi lấy thông tin nhà cung cấp")
+	}
+
+	response := &dto.SupplierResponse{
+		ID:      supplier.ID,
+		Name:    supplier.Name,
+		Phone:   supplier.Phone,
+		Email:   supplier.Email,
+		Address: supplier.Address,
+		TaxCode: supplier.TaxCode,
+		Status:  supplier.Status,
+	}
+
+	return response, nil
+}

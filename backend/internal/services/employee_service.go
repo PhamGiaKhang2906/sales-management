@@ -104,10 +104,13 @@ func (s *EmployeeService) CreateEmployee(storeID uint, req *dto.EmployeeCreateRe
 		return nil, errors.New("Lỗi khi mã hóa mật khẩu")
 	}
 
-	// Get employee role (assumed to have role_name = "employee" or similar)
-	role, err := s.roleRepo.GetRoleByName("employee")
+	// Get employee role (assumed to have role_name = "sale" or "storemanage")
+	role, err := s.roleRepo.GetRoleByName("sales")
 	if err != nil {
-		return nil, errors.New("Vai trò nhân viên không tồn tại")
+		role, err = s.roleRepo.GetRoleByName("storemanage")
+		if err != nil {
+			return nil, errors.New("Vai trò nhân viên không tồn tại")
+		}
 	}
 
 	// Create user account
@@ -284,4 +287,34 @@ func (s *EmployeeService) DeleteEmployee(id uint, storeID uint) error {
 	}
 
 	return nil
+}
+
+// GetEmployee retrieves an employee by ID
+func (s *EmployeeService) GetEmployee(id uint) (*dto.EmployeeResponse, error) {
+	employee, err := s.employeeRepo.GetEmployeeByID(id)
+	if err != nil {
+		return nil, errors.New("Lỗi khi lấy thông tin nhân viên")
+	}
+
+	birthdayStr := ""
+	if employee.Birthday != nil {
+		birthdayStr = employee.Birthday.Format("2006-01-02")
+	}
+
+	response := &dto.EmployeeResponse{
+		ID:           employee.ID,
+		UserID:       employee.UserID,
+		Username:     employee.User.Username,
+		Fullname:     employee.User.FullName,
+		Phone:        employee.User.Phone,
+		CCCD:         employee.CCCD,
+		Address:      employee.Address,
+		Birthday:     &birthdayStr,
+		SalaryFactor: employee.SalaryFactor,
+		WorkShift:    employee.WorkShift,
+		Status:       employee.User.Status,
+		CreatedAt:    employee.User.CreatedAt.Format("2006-01-02 15:04:05"),
+	}
+
+	return response, nil
 }

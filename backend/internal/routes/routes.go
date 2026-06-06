@@ -12,6 +12,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	{
 		// Authentication routes (register, login, etc.)
 		AuthRoutes(publicAPI, db)
+		// Store type routes (for registration)
 		SetupStoreTypeRoutes(publicAPI, db)
 	}
 

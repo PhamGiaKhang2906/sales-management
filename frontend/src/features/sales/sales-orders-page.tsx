@@ -1,280 +1,319 @@
 "use client";
 
-import { useState } from 'react';
-import { Plus, Eye } from 'lucide-react';
-import { DataTable } from '../../components/layout/DataTable';
-import { Modal } from '../../components/layout/Modal';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Trash2, User, Phone, MapPin, Loader2 } from 'lucide-react';
 
-interface SalesOrder {
+// Khai báo kiểu dữ liệu cho Sản phẩm trả về từ API
+interface Product {
   id: number;
-  orderCode: string;
-  date: string;
-  customerName: string;
-  items: { product: string; quantity: number; price: number }[];
-  total: number;
-  status: string;
+  name: string;
+  sku: string;
+  price: number;
+}
+
+// Khai báo kiểu dữ liệu cho Sản phẩm trong Giỏ hàng
+interface OrderItem {
+  id: number;
+  productName: string;
+  sku: string;
+  quantity: number;
+  price: number;
 }
 
 export function SalesOrdersPage() {
-  const [orders, setOrders] = useState<SalesOrder[]>([
-    {
-      id: 1,
-      orderCode: 'DH001',
-      date: '2026-04-18',
-      customerName: 'Nguyễn Văn A',
-      items: [
-        { product: 'Sản phẩm A', quantity: 2, price: 500000 },
-        { product: 'Sản phẩm B', quantity: 1, price: 300000 },
-      ],
-      total: 1300000,
-      status: 'Hoàn thành',
-    },
-    {
-      id: 2,
-      orderCode: 'DH002',
-      date: '2026-04-19',
-      customerName: 'Trần Thị B',
-      items: [
-        { product: 'Sản phẩm C', quantity: 3, price: 150000 },
-      ],
-      total: 450000,
-      status: 'Đang xử lý',
-    },
-  ]);
+  const [isClient, setIsClient] = useState(false); // Xử lý lỗi hydration Next.js
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [viewingOrder, setViewingOrder] = useState<SalesOrder | null>(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [orderItems, setOrderItems] = useState<{ product: string; quantity: number; price: number }[]>([]);
-  const [newFormData, setNewFormData] = useState({
-    customerName: '',
-    date: new Date().toISOString().split('T')[0],
-  });
+  // State giỏ hàng (Khởi tạo trống, sẽ load từ localStorage sau khi component mount)
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [discount, setDiscount] = useState(0);
 
-  const columns = [
-    { key: 'orderCode', label: 'Mã đơn' },
-    { key: 'date', label: 'Ngày' },
-    { key: 'customerName', label: 'Khách hàng' },
-    { key: 'total', label: 'Tổng tiền', render: (value: number) => value.toLocaleString('vi-VN') + ' đ' },
-    { key: 'status', label: 'Trạng thái', render: (value: string) => (
-      <span className={`px-2 py-1 rounded text-sm ${
-        value === 'Hoàn thành' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-      }`}>
-        {value}
-      </span>
-    )},
-  ];
+  // 1. CHẠY KHI MỞ TRANG: Load giỏ hàng lưu tạm từ LocalStorage
+  useEffect(() => {
+    setIsClient(true);
+    const savedCart = localStorage.getItem('pos_cart_temp');
+    if (savedCart) {
+      try {
+        setOrderItems(JSON.parse(savedCart));
+      } catch (error) {
+        console.error("Lỗi đọc giỏ hàng từ localStorage", error);
+      }
+    }
+  }, []);
 
-  const handleView = (order: SalesOrder) => {
-    setViewingOrder(order);
-    setIsModalOpen(true);
-  };
+  // 2. CHẠY MỖI KHI GIỎ HÀNG THAY ĐỔI: Cập nhật lại vào LocalStorage
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem('pos_cart_temp', JSON.stringify(orderItems));
+    }
+  }, [orderItems, isClient]);
 
-  const handleDelete = (order: SalesOrder) => {
-    if (confirm(`Bạn có chắc muốn xóa đơn hàng "${order.orderCode}"?`)) {
-      setOrders(orders.filter(o => o.id !== order.id));
+  // Xử lý đóng Dropdown khi click ra ngoài vùng tìm kiếm
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // 3. HÀM GỌI API TÌM KIẾM (Kích hoạt khi bấm nút tìm)
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setShowDropdown(true);
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/owner/products?search=${encodeURIComponent(searchQuery)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      const resData = await response.json();
+      
+      // Xử lý dữ liệu trả về theo đúng cấu trúc DTO ProductsListResponse
+      if (resData && resData.data && resData.data.products) {
+        setSearchResults(resData.data.products);
+      } else if (Array.isArray(resData.data)) {
+        setSearchResults(resData.data);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error("Lỗi khi tìm kiếm sản phẩm:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
     }
   };
 
-  const handleAddItem = () => {
-    setOrderItems([...orderItems, { product: '', quantity: 1, price: 0 }]);
+  // Bắt sự kiện nhấn phím Enter trong ô tìm kiếm
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
-  const handleSubmitOrder = (e: React.FormEvent) => {
-    e.preventDefault();
-    const total = orderItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-    const newOrder: SalesOrder = {
-      id: Date.now(),
-      orderCode: 'DH' + String(Date.now()).slice(-3),
-      date: newFormData.date,
-      customerName: newFormData.customerName,
-      items: orderItems,
-      total,
-      status: 'Đang xử lý',
-    };
-    setOrders([...orders, newOrder]);
-    setIsCreateModalOpen(false);
-    setOrderItems([]);
-    setNewFormData({ customerName: '', date: new Date().toISOString().split('T')[0] });
+  // 4. HÀM THÊM SẢN PHẨM VÀO GIỎ HÀNG
+  const handleSelectProduct = (product: Product) => {
+    setOrderItems((prevItems) => {
+      const existingItemIndex = prevItems.findIndex(item => item.id === product.id);
+      
+      if (existingItemIndex >= 0) {
+        // Đã có trong giỏ -> Tăng số lượng
+        const updatedItems = [...prevItems];
+        updatedItems[existingItemIndex].quantity += 1;
+        return updatedItems;
+      } else {
+        // Chưa có trong giỏ -> Thêm mới
+        return [...prevItems, {
+          id: product.id,
+          productName: product.name,
+          sku: product.sku,
+          price: product.price,
+          quantity: 1
+        }];
+      }
+    });
+
+    // Sau khi chọn, ẩn list tìm kiếm và xóa thanh gõ
+    setShowDropdown(false);
+    setSearchQuery('');
   };
+
+  // Cập nhật số lượng sản phẩm (+/-)
+  const updateQuantity = (id: number, amount: number) => {
+    setOrderItems((prev) => prev.map(item => {
+      if (item.id === id) {
+        const newQty = item.quantity + amount;
+        return { ...item, quantity: newQty < 1 ? 1 : newQty };
+      }
+      return item;
+    }));
+  };
+
+  const handleRemoveItem = (id: number) => {
+    setOrderItems(orderItems.filter(item => item.id !== id));
+  };
+
+  // Tính toán tiền
+  const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const finalAmount = Math.max(0, totalAmount - discount);
+
+  // Không render UI gốc cho đến khi client hydration xong (Tránh lỗi Next.js)
+  if (!isClient) return null;
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="font-semibold text-2xl text-gray-800">Quản lý đơn bán hàng</h2>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+    <div className="flex flex-col h-screen bg-gray-100 p-4 font-sans">
+      
+      {/* THANH TAB TÌM KIẾM SẢN PHẨM CÓ NÚT BẤM */}
+      <div className="relative w-full bg-white p-2 rounded-lg shadow-sm mb-4 flex items-center border border-gray-200" ref={dropdownRef}>
+        <div className="flex flex-1 items-center px-2">
+          <Search className="text-gray-400 mr-2" size={24} />
+          <input
+            type="text"
+            placeholder="Tìm kiếm sản phẩm theo tên (VD: Áo), mã SKU... và bấm nút Tìm hoặc Enter"
+            className="w-full outline-none text-lg"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => { if (searchResults.length > 0) setShowDropdown(true); }}
+          />
+        </div>
+        
+        {/* Nút Tìm Kiếm ở cuối thanh */}
+        <button 
+          onClick={handleSearch}
+          disabled={isSearching}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-semibold transition-colors flex items-center min-w-[120px] justify-center"
         >
-          <Plus className="w-5 h-5" />
-          Tạo đơn hàng
+          {isSearching ? <Loader2 className="animate-spin" size={20} /> : "Tìm kiếm"}
         </button>
-      </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <DataTable
-          columns={columns}
-          data={orders}
-          onView={handleView}
-          onDelete={handleDelete}
-        />
-      </div>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Chi tiết đơn hàng"
-      >
-        {viewingOrder && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-gray-500">Mã đơn hàng</p>
-                <p className="font-medium">{viewingOrder.orderCode}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Ngày</p>
-                <p className="font-medium">{viewingOrder.date}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Khách hàng</p>
-                <p className="font-medium">{viewingOrder.customerName}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Trạng thái</p>
-                <p className="font-medium">{viewingOrder.status}</p>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium mb-2">Sản phẩm</h4>
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Tên sản phẩm</th>
-                    <th className="px-4 py-2 text-left">Số lượng</th>
-                    <th className="px-4 py-2 text-left">Đơn giá</th>
-                    <th className="px-4 py-2 text-left">Thành tiền</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {viewingOrder.items.map((item, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="px-4 py-2">{item.product}</td>
-                      <td className="px-4 py-2">{item.quantity}</td>
-                      <td className="px-4 py-2">{item.price.toLocaleString('vi-VN')} đ</td>
-                      <td className="px-4 py-2">{(item.quantity * item.price).toLocaleString('vi-VN')} đ</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="mt-4 text-right">
-                <p className="font-semibold text-lg">Tổng: {viewingOrder.total.toLocaleString('vi-VN')} đ</p>
-              </div>
-            </div>
+        {/* Khung Dropdown Hiển thị Danh sách Kết quả Tìm kiếm */}
+        {showDropdown && (
+          <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
+            {isSearching ? (
+              <div className="p-4 text-center text-gray-500">Đang tìm kiếm...</div>
+            ) : searchResults.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">Không tìm thấy sản phẩm nào!</div>
+            ) : (
+              searchResults.map((product) => (
+                <div 
+                  key={product.id}
+                  onClick={() => handleSelectProduct(product)}
+                  className="flex justify-between items-center p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+                >
+                  <div>
+                    <h4 className="font-bold text-gray-800">{product.name}</h4>
+                    <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                  </div>
+                  <div className="font-bold text-blue-600">
+                    {product.price.toLocaleString('vi-VN')} đ
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
-      </Modal>
+      </div>
 
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        title="Tạo đơn hàng mới"
-        size="lg"
-      >
-        <form onSubmit={handleSubmitOrder} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">Tên khách hàng</label>
-              <input
-                type="text"
-                value={newFormData.customerName}
-                onChange={(e) => setNewFormData({ ...newFormData, customerName: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
+      {/* KHU VỰC NỘI DUNG CHÍNH */}
+      <div className="flex flex-1 gap-4 overflow-hidden">
+        
+        {/* ================= CỘT TRÁI (6/10) ================= */}
+        <div className="w-[60%] flex flex-col gap-4">
+          
+          {/* Khu trên (8/10): Product Card List */}
+          <div className="h-[80%] bg-white rounded-lg shadow-sm p-4 overflow-y-auto">
+            {orderItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                <Search size={48} className="mb-4 opacity-20" />
+                <p>Chưa có sản phẩm nào trong đơn hàng</p>
+                <p className="text-sm mt-2">Dữ liệu đơn hàng đang được lưu tự động</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {orderItems.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-800 text-lg">{item.productName}</h4>
+                      <p className="text-xs text-gray-500 mb-1">SKU: {item.sku}</p>
+                      <p className="text-blue-600 font-semibold">{item.price.toLocaleString('vi-VN')} đ</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center border rounded-md overflow-hidden bg-gray-50">
+                        <button onClick={() => updateQuantity(item.id, -1)} className="px-3 py-1 hover:bg-gray-200 font-bold">-</button>
+                        <span className="px-4 font-medium bg-white py-1">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.id, 1)} className="px-3 py-1 hover:bg-gray-200 font-bold">+</button>
+                      </div>
+                      <p className="font-bold text-lg w-32 text-right">
+                        {(item.price * item.quantity).toLocaleString('vi-VN')} đ
+                      </p>
+                      <button 
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Khu dưới (2/10): Tính tiền */}
+          <div className="h-[20%] bg-white rounded-lg shadow-sm p-4 flex flex-col justify-between">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-600 font-medium">Tổng tiền ({orderItems.length} sản phẩm):</span>
+              <span className="font-bold text-gray-800">{totalAmount.toLocaleString('vi-VN')} đ</span>
+            </div>
+            <div className="flex justify-between items-center mb-2 border-b pb-2">
+              <span className="text-gray-600 font-medium">Khuyến mãi/Giảm giá (VND):</span>
+              <input 
+                type="number" 
+                value={discount === 0 ? '' : discount}
+                onChange={(e) => setDiscount(Number(e.target.value))}
+                className="w-32 text-right border rounded p-1 outline-none focus:border-blue-500 font-semibold"
               />
             </div>
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">Ngày</label>
-              <input
-                type="date"
-                value={newFormData.date}
-                onChange={(e) => setNewFormData({ ...newFormData, date: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-xl font-bold text-gray-800">Khách cần trả:</span>
+              <span className="text-2xl font-bold text-blue-600">{finalAmount.toLocaleString('vi-VN')} đ</span>
             </div>
           </div>
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block font-medium text-gray-700">Sản phẩm</label>
-              <button
-                type="button"
-                onClick={handleAddItem}
-                className="text-blue-600 hover:text-blue-700"
-              >
-                + Thêm sản phẩm
-              </button>
-            </div>
-            <div className="space-y-2">
-              {orderItems.map((item, index) => (
-                <div key={index} className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Tên sản phẩm"
-                    value={item.product}
-                    onChange={(e) => {
-                      const newItems = [...orderItems];
-                      newItems[index].product = e.target.value;
-                      setOrderItems(newItems);
-                    }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                    required
-                  />
-                  <input
-                    type="number"
-                    placeholder="SL"
-                    value={item.quantity}
-                    onChange={(e) => {
-                      const newItems = [...orderItems];
-                      newItems[index].quantity = Number(e.target.value);
-                      setOrderItems(newItems);
-                    }}
-                    className="w-20 px-4 py-2 border border-gray-300 rounded-lg"
-                    required
-                  />
-                  <input
-                    type="number"
-                    placeholder="Giá"
-                    value={item.price}
-                    onChange={(e) => {
-                      const newItems = [...orderItems];
-                      newItems[index].price = Number(e.target.value);
-                      setOrderItems(newItems);
-                    }}
-                    className="w-32 px-4 py-2 border border-gray-300 rounded-lg"
-                    required
-                  />
-                </div>
-              ))}
+        </div>
+
+        {/* ================= CỘT PHẢI (4/10) ================= */}
+        <div className="w-[40%] flex flex-col gap-4">
+          <div className="h-[90%] bg-white rounded-lg shadow-sm p-5 overflow-y-auto">
+            <h3 className="text-lg font-bold text-gray-800 mb-6 border-b pb-2">Thông tin khách hàng</h3>
+            <div className="flex flex-col gap-5">
+              <div className="relative">
+                <User className="absolute top-3 left-3 text-gray-400" size={20} />
+                <input type="text" placeholder="Tên khách hàng" className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500" />
+              </div>
+              <div className="relative">
+                <Phone className="absolute top-3 left-3 text-gray-400" size={20} />
+                <input type="tel" placeholder="Số điện thoại" className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500" />
+              </div>
+              <div className="relative">
+                <MapPin className="absolute top-3 left-3 text-gray-400" size={20} />
+                <textarea placeholder="Địa chỉ giao hàng (nếu có)" rows={3} className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500 resize-none" />
+              </div>
             </div>
           </div>
-          <div className="flex gap-3 justify-end pt-4">
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(false)}
-              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+
+          <div className="h-[10%] flex items-end">
+            <button 
+               className="w-full h-full bg-green-600 hover:bg-green-700 text-white text-xl font-bold rounded-lg shadow-md transition-colors"
+               onClick={() => {
+                 alert("Bắt đầu xử lý gọi API lưu order...");
+                 // Sau khi lưu API thành công, bạn gọi lệnh này để xoá cache: 
+                 // localStorage.removeItem('pos_cart_temp'); setOrderItems([]);
+               }}
             >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Tạo đơn
+              TẠO ĐƠN HÀNG
             </button>
           </div>
-        </form>
-      </Modal>
+        </div>
+
+      </div>
     </div>
   );
 }

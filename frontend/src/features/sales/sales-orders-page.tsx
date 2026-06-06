@@ -267,11 +267,13 @@ export function SalesOrdersPage() {
           </div>
 
           {/* Khu dưới (2/10): Tính tiền */}
-          <div className="h-[20%] bg-white rounded-lg shadow-sm p-4 flex flex-col justify-between">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600 font-medium">
+          <div className="min-h-[220px] bg-white rounded-lg shadow-sm p-4 flex flex-col gap-4">
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-700">
                 Mã khuyến mãi (%):
               </span>
+
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -279,32 +281,42 @@ export function SalesOrdersPage() {
                   max="100"
                   value={discount === 0 ? '' : discount}
                   onChange={(e) => setDiscount(Number(e.target.value))}
-                  className="w-24 text-right border rounded p-1 outline-none focus:border-blue-500 font-semibold"
+                  className="w-24 h-9 text-sm text-right border rounded px-2 outline-none focus:border-blue-500"
                 />
-                <span>%</span>
+                <span className="text-sm text-gray-700">%</span>
               </div>
             </div>
 
-            <div className="flex justify-between items-center mb-2 border-b pb-2">
-              <span className="text-gray-600 font-medium">
+            <div className="flex justify-between items-center border-b pb-3">
+              <span className="text-sm font-medium text-gray-700">
                 Tổng tiền ({orderItems.length} sản phẩm):
               </span>
-              <span className="font-bold text-gray-800">
+
+              <span className="text-sm font-semibold text-gray-700">
                 {totalAmount.toLocaleString('vi-VN')} đ
               </span>
             </div>
+
             <div className="flex justify-between items-center">
-              <span className="text-gray-600 font-medium">
+              <span className="text-sm font-medium text-gray-700">
                 Tiền giảm:
               </span>
-              <span className="text-red-500 font-semibold">
+
+              <span className="text-sm font-semibold text-gray-700">
                 -{discountAmount.toLocaleString('vi-VN')} đ
               </span>
             </div>
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-xl font-bold text-gray-800">Khách cần trả:</span>
-              <span className="text-2xl font-bold text-blue-600">{finalAmount.toLocaleString('vi-VN')} đ</span>
+
+            <div className="flex justify-between items-center pt-1">
+              <span className="text-sm font-medium text-gray-700">
+                Khách cần trả:
+              </span>
+
+              <span className="text-sm font-semibold text-gray-700">
+                {finalAmount.toLocaleString('vi-VN')} đ
+              </span>
             </div>
+
           </div>
         </div>
 

@@ -55,8 +55,10 @@ type StoreTypeResponse struct {
 
 // StoreTypesListResponse represents a list of store types
 type StoreTypesListResponse struct {
-	StoreTypes []StoreTypeResponse `json:"store_types"`
-	Total      int                 `json:"total"`
+	StoreTypes      []StoreTypeResponse `json:"store_types"`
+	Total           int                 `json:"total"`
+	TotalStores     int64               `json:"total_stores"`
+	MostPopularType string              `json:"most_popular_type"`
 }
 
 // ===== Supplier DTOs =====

@@ -104,10 +104,10 @@ func (s *EmployeeService) CreateEmployee(storeID uint, req *dto.EmployeeCreateRe
 		return nil, errors.New("Lỗi khi mã hóa mật khẩu")
 	}
 
-	// Get employee role (assumed to have role_name = "sale" or "storemanage")
+	// Get employee role (assumed to have role_name = "sale" or "warehouse")
 	role, err := s.roleRepo.GetRoleByName("sales")
 	if err != nil {
-		role, err = s.roleRepo.GetRoleByName("storemanage")
+		role, err = s.roleRepo.GetRoleByName("warehouse")
 		if err != nil {
 			return nil, errors.New("Vai trò nhân viên không tồn tại")
 		}

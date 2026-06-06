@@ -12,17 +12,19 @@ import (
 )
 
 type ProductService struct {
-	productRepo  *repository.ProductRepository
-	categoryRepo *repository.CategoryRepository
-	supplierRepo *repository.SupplierRepository
+	productRepo   *repository.ProductRepository
+	categoryRepo  *repository.CategoryRepository
+	supplierRepo  *repository.SupplierRepository
+	inventoryRepo *repository.InventoryRepository
 }
 
 // NewProductService creates a new product service
-func NewProductService(productRepo *repository.ProductRepository, categoryRepo *repository.CategoryRepository, supplierRepo *repository.SupplierRepository) *ProductService {
+func NewProductService(productRepo *repository.ProductRepository, categoryRepo *repository.CategoryRepository, supplierRepo *repository.SupplierRepository, inventoryRepo *repository.InventoryRepository) *ProductService {
 	return &ProductService{
-		productRepo:  productRepo,
-		categoryRepo: categoryRepo,
-		supplierRepo: supplierRepo,
+		productRepo:   productRepo,
+		categoryRepo:  categoryRepo,
+		supplierRepo:  supplierRepo,
+		inventoryRepo: inventoryRepo,
 	}
 }
 

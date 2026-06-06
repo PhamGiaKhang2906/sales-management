@@ -13,8 +13,9 @@ func ProductRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	productRepo := repository.NewProductRepository(db)
 	categoryRepo := repository.NewCategoryRepository(db)
 	supplierRepo := repository.NewSupplierRepository(db)
+	inventoryRepo := repository.NewInventoryRepository(db)
 
-	productService := services.NewProductService(productRepo, categoryRepo, supplierRepo)
+	productService := services.NewProductService(productRepo, categoryRepo, supplierRepo, inventoryRepo)
 	productCtrl := controllers.NewProductController(productService)
 
 	products := r.Group("/products")

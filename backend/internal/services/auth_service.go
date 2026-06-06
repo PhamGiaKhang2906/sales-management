@@ -10,9 +10,10 @@ import (
 )
 
 type AuthService struct {
-	userRepo  *repository.UserRepository
-	storeRepo *repository.StoreRepository
-	roleRepo  *repository.RoleRepository
+	userRepo      *repository.UserRepository
+	storeRepo     *repository.StoreRepository
+	roleRepo      *repository.RoleRepository
+	storetypeRepo *repository.StoreTypeRepository
 }
 
 // NewAuthService creates a new auth service
@@ -96,6 +97,7 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.RegisterResponse,
 		Name:        req.Username,
 		Phone:       req.Phone,
 		StoreTypeID: storeType.ID,
+		Address:     req.Address,
 	}
 
 	if err := s.storeRepo.CreateStore(store); err != nil {

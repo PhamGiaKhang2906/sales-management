@@ -2,15 +2,12 @@
 
 import { useState } from 'react';
 import {
-  CalendarDays,
   ChevronDown,
   Filter,
-  ImagePlus,
   Layers3,
   PackageSearch,
   Plus,
   Search,
-  Star,
   Store,
 } from 'lucide-react';
 import { Modal } from '../../components/layout/Modal';
@@ -86,6 +83,7 @@ export function ProductsPage() {
 
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [isGroupDropdownOpen, setIsGroupDropdownOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchText, setSearchText] = useState('');
   const [groupSearchText, setGroupSearchText] = useState('');
@@ -242,29 +240,34 @@ export function ProductsPage() {
                 <input
                   value={groupSearchText}
                   onChange={(e) => setGroupSearchText(e.target.value)}
-                  placeholder="Chọn nhóm hàng"
+                  onFocus={() => setIsGroupDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsGroupDropdownOpen(false), 200)}
+                  placeholder={groupFilter === 'Tất cả' ? "Chọn nhóm hàng" : groupFilter}
                   className="w-full rounded-2xl border border-slate-200 px-4 py-3 pr-10 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              </div>
-              <div className="mt-2 max-h-40 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50 p-2">
-                <button
-                  type="button"
-                  onClick={() => setGroupFilter('Tất cả')}
-                  className={`mb-1 w-full rounded-xl px-3 py-2 text-left text-sm ${groupFilter === 'Tất cả' ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-white'}`}
-                >
-                  Tất cả
-                </button>
-                {filteredGroups.map((group) => (
-                  <button
-                    key={group.id}
-                    type="button"
-                    onClick={() => setGroupFilter(group.name)}
-                    className={`mb-1 w-full rounded-xl px-3 py-2 text-left text-sm ${groupFilter === group.name ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-white'}`}
-                  >
-                    {group.name}
-                  </button>
-                ))}
+                <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-transform ${isGroupDropdownOpen ? 'rotate-180' : ''}`} />
+                
+                {isGroupDropdownOpen && (
+                  <div className="absolute left-0 top-full z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-2 shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => { setGroupFilter('Tất cả'); setGroupSearchText(''); setIsGroupDropdownOpen(false); }}
+                      className={`mb-1 w-full rounded-xl px-3 py-2 text-left text-sm ${groupFilter === 'Tất cả' ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                    >
+                      Tất cả
+                    </button>
+                    {filteredGroups.map((group) => (
+                      <button
+                        key={group.id}
+                        type="button"
+                        onClick={() => { setGroupFilter(group.name); setGroupSearchText(''); setIsGroupDropdownOpen(false); }}
+                        className={`mb-1 w-full rounded-xl px-3 py-2 text-left text-sm ${groupFilter === group.name ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                      >
+                        {group.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -321,21 +324,14 @@ export function ProductsPage() {
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1200px] border-collapse text-sm">
+            <table className="w-full min-w-[1000px] border-collapse text-sm">
               <thead>
                 <tr className="bg-sky-50/80 text-slate-700">
-                  <th className="w-12 px-3 py-4 text-left">
-                    <input type="checkbox" className="h-4 w-4 rounded border-slate-300" />
-                  </th>
-                  <th className="w-12 px-3 py-4 text-left">
-                    <Star className="h-5 w-5 text-slate-400" />
-                  </th>
-                  <th className="px-4 py-4 text-left font-semibold">Hình</th>
                   <th className="px-4 py-4 text-left font-semibold">Mã hàng</th>
                   <th className="px-4 py-4 text-left font-semibold">Tên hàng</th>
                   <th className="px-4 py-4 text-left font-semibold">Giá bán</th>
                   <th className="px-4 py-4 text-left font-semibold">Giá vốn</th>
-                  <th className="px-4 py-4 text-left font-semibold">Tồn kho</th>
+                  <th className="px-4 py-4 text-left font-semibold text-center">Tồn kho</th>
                   <th className="px-4 py-4 text-left font-semibold">Thời gian tạo</th>
                   <th className="px-4 py-4 text-left font-semibold">Thao tác</th>
                 </tr>
@@ -343,30 +339,17 @@ export function ProductsPage() {
 
               <tbody>
                 <tr className="border-b border-slate-100 bg-slate-50/60 font-semibold text-slate-900">
-                  <td className="px-3 py-4" />
-                  <td className="px-3 py-4" />
-                  <td className="px-4 py-4" />
                   <td className="px-4 py-4" />
                   <td className="px-4 py-4" />
                   <td className="px-4 py-4" />
                   <td className="px-4 py-4" />
                   <td className="px-4 py-4 text-center">184</td>
                   <td className="px-4 py-4">---</td>
+                  <td className="px-4 py-4" />
                 </tr>
 
                 {filteredProducts.map((product) => (
                   <tr key={product.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-3 py-4">
-                      <input type="checkbox" className="h-4 w-4 rounded border-slate-300" />
-                    </td>
-                    <td className="px-3 py-4 text-slate-400">
-                      <Star className="h-5 w-5" />
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-amber-100 text-lg">
-                        {product.image ?? '🛍️'}
-                      </div>
-                    </td>
                     <td className="px-4 py-4 font-medium text-slate-900">{product.code}</td>
                     <td className="max-w-[320px] px-4 py-4 text-slate-900">
                       <div className="truncate">{product.name}</div>

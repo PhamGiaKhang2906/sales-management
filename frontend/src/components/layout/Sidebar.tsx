@@ -14,6 +14,7 @@ export function Sidebar({ role, currentPath, isOpen, onClose }: SidebarProps) {
   const ownerMenuItems = [
     { id: 'owner-dashboard', href: '/owner', label: 'Tổng quan', icon: Home },
     { id: 'owner-products', href: '/owner/products', label: 'Mặt hàng', icon: Package },
+    { id: 'owner-orders', href: '/owner/orders', label: 'Đơn hàng', icon: ShoppingCart },
     { id: 'owner-suppliers', href: '/owner/suppliers', label: 'Nhà cung cấp', icon: Warehouse },
     { id: 'owner-customers', href: '/owner/customers', label: 'Khách hàng', icon: Users },
     { id: 'owner-employees', href: '/owner/employees', label: 'Nhân viên', icon: Users },

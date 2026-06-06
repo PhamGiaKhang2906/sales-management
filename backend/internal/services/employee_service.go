@@ -105,12 +105,9 @@ func (s *EmployeeService) CreateEmployee(storeID uint, req *dto.EmployeeCreateRe
 	}
 
 	// Get employee role (assumed to have role_name = "sale" or "warehouse")
-	role, err := s.roleRepo.GetRoleByName("sales")
+	role, err := s.roleRepo.GetRoleByName(req.RoleName)
 	if err != nil {
-		role, err = s.roleRepo.GetRoleByName("warehouse")
-		if err != nil {
-			return nil, errors.New("Vai trò nhân viên không tồn tại")
-		}
+		return nil, errors.New("Vai trò nhân viên không hợp lệ hoặc không tồn tại")
 	}
 
 	// Create user account

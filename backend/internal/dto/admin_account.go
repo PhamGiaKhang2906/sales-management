@@ -131,6 +131,7 @@ type EmployeeCreateRequest struct {
 	Username     string  `json:"username" binding:"required,min=5,max=50"`
 	Password     string  `json:"password" binding:"required,min=6,max=100"`
 	Phone        string  `json:"phone" binding:"required,min=10,max=20"`
+	RoleName     string  `json:"role_name" binding:"required,oneof=sales warehouse"`
 	CCCD         string  `json:"cccd" binding:"max=20"`
 	Address      string  `json:"address" binding:"max=255"`
 	Birthday     *string `json:"birthday"`                      // Format: YYYY-MM-DD

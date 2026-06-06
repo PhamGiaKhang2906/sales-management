@@ -1,10 +1,10 @@
-export type AuthRole = 'owner' | 'sales' | 'warehouse';
+export type AuthRole = 'owner' | 'sales' | 'warehouse' | 'admin';
 
 export interface AuthAccount {
   username: string;
   name: string; // Add name field
   role: AuthRole;
-  // Removed password and product, as they shouldn't be stored directly in AuthAccount
+  roleId: number; // Add roleId field
 }
 
 

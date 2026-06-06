@@ -2,6 +2,7 @@ export interface RegisterRequest {
   username: string;
   password: string;
   phone: string;
+  address: string;
   fullName: string;
   store_type: string;
 }

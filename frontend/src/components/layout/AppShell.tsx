@@ -8,7 +8,7 @@ import { BrandMark } from './BrandMark';
 import { Sidebar } from './Sidebar';
 
 interface AppShellProps {
-  role: 'owner' | 'sales' | 'warehouse';
+  role: 'owner' | 'sales' | 'warehouse' | 'admin';
   title: string;
   children: ReactNode;
 }
@@ -42,7 +42,8 @@ export function AppShell({ role, title, children }: AppShellProps) {
   const roleLabel = useMemo(() => {
     if (role === 'owner') return 'owner';
     if (role === 'sales') return 'sales';
-    return 'warehouse';
+    if (role === 'warehouse') return 'warehouse';
+    return 'admin';
   }, [role]);
 
   return (
@@ -50,27 +51,30 @@ export function AppShell({ role, title, children }: AppShellProps) {
       <header className="h-24 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <BrandMark compact />
+          
+          {/* Thêm lg:hidden vào button này để ẩn nó trên máy tính */}
           <button
             onClick={() => setIsSidebarOpen((value) => !value)}
-            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-emerald-50 hover:text-emerald-700"
+            className="lg:hidden inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-emerald-50 hover:text-emerald-700"
             aria-label={isSidebarOpen ? 'Close navigation' : 'Open navigation'}
             aria-expanded={isSidebarOpen}
           >
             {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <h1 className="font-bold text-xl text-gray-800">{title}</h1>
+          
+          <h1 className="font-bold text-xl text-gray-800 hidden sm:block">{title}</h1>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="text-right leading-tight">
             <p className="font-semibold text-gray-800">{currentUserName || 'Người dùng'}</p>
-            <p className="text-sm text-gray-500">{roleLabel}</p>
+            <p className="text-sm text-gray-500 capitalize">{roleLabel}</p>
           </div>
           <button
             type="button"
             onClick={() => {
               localStorage.removeItem('authUser');
-              router.push('/signin');
+              router.push('/auth/signin'); // Cập nhật lại đường dẫn logout cho chuẩn
             }}
             className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 transition hover:bg-emerald-50 hover:text-emerald-700"
           >
@@ -88,7 +92,10 @@ export function AppShell({ role, title, children }: AppShellProps) {
           onClose={() => setIsSidebarOpen(false)}
         />
 
-        <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+        {/* Nội dung trang sẽ tự động lấp đầy phần không gian còn lại */}
+        <main className="flex-1 min-w-0 overflow-y-auto bg-gray-50 p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -35,23 +35,42 @@ export function Sidebar({ role, currentPath, isOpen, onClose }: SidebarProps) {
     { id: 'warehouse-salary', href: '/warehouse/salary', label: 'Lương thưởng', icon: DollarSign },
   ];
 
-  const menuItems = role === 'owner' ? ownerMenuItems : role === 'sales' ? salesMenuItems : warehouseMenuItems;
+  const adminMenuItems = [
+    { id: 'admin-users', href: '/admin/accounts-page', label: 'Quản lý người dùng', icon: Users },
+    { id: 'admin-store-types', href: '/admin/stores-type-page', label: 'Loại hàng', icon: Package },
+  ];
+
+  let menuItems = [];
+  if (role === 'owner') {
+    menuItems = ownerMenuItems;
+  } else if (role === 'sales') {
+    menuItems = salesMenuItems;
+  } else if (role === 'admin') {
+    menuItems = adminMenuItems;
+  } else {
+    menuItems = warehouseMenuItems;
+  }
 
   return (
     <>
-      {isOpen && <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />}
+      {/* Thêm lg:hidden để ẩn lớp nền mờ trên màn hình máy tính */}
+      {isOpen && <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={onClose} />}
+      
       <aside
-        className={`fixed left-0 top-24 z-50 h-[calc(100vh-6rem)] w-72 bg-white border-r border-gray-200 shadow-xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        // Thêm lg:static, lg:translate-x-0 và lg:shadow-none để menu luôn cố định trên PC
+        className={`fixed lg:static left-0 top-24 z-50 h-[calc(100vh-6rem)] w-72 bg-white border-r border-gray-200 shadow-xl lg:shadow-none transform transition-transform duration-300 ease-in-out flex-shrink-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        {/* Nút X đóng menu cũng chỉ hiện trên Mobile */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 lg:hidden">
           <h2 className="font-semibold text-gray-800">Menu</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <nav className="p-4 space-y-2">
+        
+        <nav className="p-4 space-y-2 overflow-y-auto h-full">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPath === item.href || currentPath.startsWith(`${item.href}/`);
@@ -61,7 +80,7 @@ export function Sidebar({ role, currentPath, isOpen, onClose }: SidebarProps) {
                 key={item.id}
                 href={item.href}
                 onClick={onClose}
-                className={`w-full block flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-emerald-50 text-emerald-700'
                     : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-700'

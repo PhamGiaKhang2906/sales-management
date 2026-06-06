@@ -99,3 +99,19 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "Đăng nhập thành công", data)
 }
+
+// Logout handles the user logout request by clearing the JWT cookie
+func (ctrl *AuthController) Logout(c *gin.Context) {
+	// Clear the JWT token cookie
+	c.SetCookie(
+		"token", // Cookie name
+		"",      // Empty value to clear
+		-1,      // Max age < 0 to delete the cookie
+		"/",     // Path
+		"",      // Domain
+		false,   // Secure (match the login cookie setting)
+		true,    // HttpOnly (match the login cookie setting)
+	)
+
+	utils.SuccessResponse(c, http.StatusOK, "Đăng xuất thành công", nil)
+}

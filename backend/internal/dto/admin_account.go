@@ -8,6 +8,7 @@ type AccountInfo struct {
 	StoreName string `json:"store_name"`
 	Category  string `json:"category"`
 	Status    string `json:"status"`
+	Address   string `json:"address"`
 }
 
 // AccountsStats represents statistics about accounts

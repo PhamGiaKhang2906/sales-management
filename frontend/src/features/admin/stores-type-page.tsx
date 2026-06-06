@@ -12,8 +12,16 @@ export function StoreTypesPage() {
   const [editingType, setEditingType] = useState<StoreTypeDTO | null>(null);
   const [formData, setFormData] = useState({ name: '' });
 
+  // Đảm bảo dữ liệu luôn là mảng để không lỗi hàm map/reduce
+  const safeStoreTypes = Array.isArray(storeTypes) ? storeTypes : [];
+
   const columns = [
-    { key: 'name', label: 'Tên loại cửa hàng' },
+    { 
+      key: 'name', 
+      label: 'Tên loại cửa hàng',
+      // Nhận diện cả chữ thường (name) và chữ hoa (Name) do Golang trả về
+      render: (value: any, item: any) => <span className="font-medium">{item.name || item.Name || 'Trống'}</span>
+    },
     {
       key: 'totalStores',
       label: 'Số cửa hàng',
@@ -26,7 +34,11 @@ export function StoreTypesPage() {
     { 
       key: 'CreatedAt', 
       label: 'Ngày tạo',
-      render: (value: string) => value ? new Date(value).toLocaleDateString('vi-VN') : 'Mới'
+      // Xử lý an toàn cho ngày tháng
+      render: (value: string, item: any) => {
+        const dateString = value || item.created_at || item.CreatedAt;
+        return dateString ? new Date(dateString).toLocaleDateString('vi-VN') : 'Mới';
+      }
     },
   ];
 
@@ -38,17 +50,21 @@ export function StoreTypesPage() {
 
   const handleEdit = (type: StoreTypeDTO) => {
     setEditingType(type);
-    setFormData({ name: type.name });
+    // Lấy ID và Name an toàn
+    const typeName = (type as any).name || (type as any).Name || '';
+    setFormData({ name: typeName });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (type: StoreTypeDTO) => {
-    if (confirm(`Bạn có chắc muốn xóa loại cửa hàng "${type.name}"?`)) {
-      const res = await removeStoreType(type.ID);
-      if (res && res.success) {
-        alert(res.message || "Xóa loại cửa hàng thành công!");
-      } else {
-        alert("Lỗi: " + (res?.message || "Không thể kết nối đến server"));
+    const typeName = (type as any).name || (type as any).Name || 'này';
+    const typeId = type.ID || (type as any).id;
+    
+    if (confirm(`Bạn có chắc muốn xóa loại cửa hàng "${typeName}"?`)) {
+      const res = await removeStoreType(typeId);
+      // Hiển thị thông báo nếu có lỗi từ server, nếu không thì cứ âm thầm xóa
+      if (res && res.message && !res.success && res.success !== undefined) {
+        alert("Lỗi: " + res.message);
       }
     }
   };
@@ -56,23 +72,25 @@ export function StoreTypesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    let res; // Biến lưu kết quả trả về từ API
-    
+    let res; 
     if (editingType) {
-      res = await editStoreType(editingType.ID, formData.name);
+      const typeId = editingType.ID || (editingType as any).id;
+      res = await editStoreType(typeId, formData.name);
     } else {
       res = await addStoreType(formData.name);
     }
 
-    // Kiểm tra kết quả từ backend
-    if (res && res.success) {
-      alert(res.message || "Lưu loại cửa hàng thành công!");
-      setIsModalOpen(false);
-    } else {
-      // Nếu thất bại, giữ nguyên Modal và hiện lỗi để người dùng biết
-      alert("Lỗi: " + (res?.message || "Không thể kết nối đến server"));
+    // Luôn đóng popup khi submit xong, hàm fetchStoreTypes sẽ tự load lại bảng
+    setIsModalOpen(false);
+    
+    if (res && res.message && res.success === false) {
+      alert("Lỗi: " + res.message);
     }
   };
+
+  // Xác định tên loại hàng mới nhất để hiện lên Stats
+  const latestType = safeStoreTypes.length > 0 ? safeStoreTypes[safeStoreTypes.length - 1] : null;
+  const latestName = latestType ? ((latestType as any).name || (latestType as any).Name) : 'Chưa có dữ liệu';
 
   return (
     <div className="p-6">
@@ -93,18 +111,18 @@ export function StoreTypesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-gradient-to-br from-emerald-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
           <p className="text-emerald-100 mb-2">Tổng loại cửa hàng</p>
-          <p className="font-bold text-4xl">{storeTypes.length}</p>
+          <p className="font-bold text-4xl">{safeStoreTypes.length}</p>
         </div>
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
           <p className="text-blue-100 mb-2">Tổng cửa hàng</p>
           <p className="font-bold text-4xl">
-            {storeTypes.reduce((sum, t) => sum + (t.totalStores || 0), 0)}
+            {safeStoreTypes.reduce((sum, t) => sum + (t.totalStores || 0), 0)}
           </p>
         </div>
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
           <p className="text-purple-100 mb-2">Mới cập nhật</p>
           <p className="font-bold text-xl truncate">
-            {storeTypes.length > 0 ? storeTypes[storeTypes.length - 1].name : 'Chưa có dữ liệu'}
+            {latestName}
           </p>
         </div>
       </div>
@@ -115,7 +133,7 @@ export function StoreTypesPage() {
         ) : (
           <DataTable
             columns={columns}
-            data={storeTypes}
+            data={safeStoreTypes}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
@@ -135,8 +153,8 @@ export function StoreTypesPage() {
             />
           </div>
           <div className="flex gap-3 justify-end pt-4">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 border rounded-lg">Hủy</button>
-            <button type="submit" className="px-6 py-2 bg-emerald-600 text-white rounded-lg">{editingType ? 'Cập nhật' : 'Thêm mới'}</button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
+            <button type="submit" className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">{editingType ? 'Cập nhật' : 'Thêm mới'}</button>
           </div>
         </form>
       </Modal>

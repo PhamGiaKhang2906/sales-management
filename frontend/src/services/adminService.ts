@@ -8,6 +8,7 @@ export interface AdminAccountInfo {
   store_name: string;
   category: string;
   status: string;
+  address?: string; // BỔ SUNG TRƯỜNG ĐỊA CHỈ
 }
 
 export interface AdminAccountsStats {
@@ -24,28 +25,16 @@ export interface StoreTypeDTO {
   totalStores?: number;
 }
 
-// HÀM MỚI: Tự động lấy token từ LocalStorage và tạo Header chứa Authorization
 const getAuthHeaders = (): HeadersInit => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
   if (typeof window !== 'undefined') {
-    // Tùy thuộc vào cách bạn lưu token lúc login. 
-    // Giả sử bạn lưu biến 'token' trực tiếp trong localStorage:
     const token = localStorage.getItem('token'); 
     
-    // NẾU token của bạn được lưu chung trong object 'authUser', hãy dùng đoạn code dưới thay thế:
-    /*
-    const authUserRaw = localStorage.getItem('authUser');
-    if (authUserRaw) {
-      const authUser = JSON.parse(authUserRaw);
-      if (authUser.token) headers['Authorization'] = `Bearer ${authUser.token}`;
-    }
-    */
-
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`; // Gắn chìa khóa vào Header
+      headers['Authorization'] = `Bearer ${token}`; 
     }
   }
 
@@ -56,7 +45,7 @@ export const adminService = {
   // ================= Accounts =================
   async getAccounts() {
     const response = await fetch(`${API_BASE_URL}/admin/accounts`, {
-      headers: getAuthHeaders(), // Thêm header vào đây
+      headers: getAuthHeaders(),
     });
     return response.json();
   },
@@ -64,7 +53,7 @@ export const adminService = {
   async changeAccountStatus(userId: number, status: string) {
     const response = await fetch(`${API_BASE_URL}/admin/accounts/status`, {
       method: 'PUT',
-      headers: getAuthHeaders(), // Thêm header vào đây
+      headers: getAuthHeaders(),
       body: JSON.stringify({ user_id: userId, status }),
     });
     return response.json();
@@ -73,7 +62,7 @@ export const adminService = {
   // ================= Store Types =================
   async getStoreTypes() {
     const response = await fetch(`${API_BASE_URL}/admin/store-types`, {
-      headers: getAuthHeaders(), // Thêm header vào đây
+      headers: getAuthHeaders(),
     });
     return response.json();
   },
@@ -81,7 +70,7 @@ export const adminService = {
   async createStoreType(name: string) {
     const response = await fetch(`${API_BASE_URL}/admin/store-types`, {
       method: 'POST',
-      headers: getAuthHeaders(), // Thêm header vào đây
+      headers: getAuthHeaders(),
       body: JSON.stringify({ name }),
     });
     return response.json();
@@ -90,7 +79,7 @@ export const adminService = {
   async updateStoreType(id: number, name: string) {
     const response = await fetch(`${API_BASE_URL}/admin/store-types/${id}`, {
       method: 'PUT',
-      headers: getAuthHeaders(), // Thêm header vào đây
+      headers: getAuthHeaders(),
       body: JSON.stringify({ name }),
     });
     return response.json();
@@ -99,7 +88,7 @@ export const adminService = {
   async deleteStoreType(id: number) {
     const response = await fetch(`${API_BASE_URL}/admin/store-types/${id}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(), // Hàm DELETE cũng cần token
+      headers: getAuthHeaders(),
     });
     return response.json();
   },

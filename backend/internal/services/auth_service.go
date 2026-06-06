@@ -96,6 +96,7 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.RegisterResponse,
 		Name:        req.Username,
 		Phone:       req.Phone,
 		StoreTypeID: storeType.ID,
+		Address:     req.Address,
 	}
 
 	if err := s.storeRepo.CreateStore(store); err != nil {

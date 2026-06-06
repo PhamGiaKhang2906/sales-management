@@ -24,4 +24,5 @@ export interface LoginResponse {
   username: string;
   role_id: number;
   message: string;
+  token?: string;
 }

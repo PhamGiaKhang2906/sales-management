@@ -1,4 +1,3 @@
-// src/hooks/useAdmin.ts
 import { useState, useEffect } from 'react';
 import { adminService, AdminAccountInfo, AdminAccountsStats, StoreTypeDTO } from '../services/adminService';
 
@@ -11,12 +10,24 @@ export function useAccounts() {
     setIsLoading(true);
     try {
       const res = await adminService.getAccounts();
-      if (res.success && res.data) {
-        setAccounts(res.data.Accounts || []);
-        setStats(res.data.Stats || null);
+      console.log("👥 Dữ liệu Accounts từ API:", res); // LOG ĐỂ KIỂM TRA
+
+      // Linh hoạt bắt dữ liệu chữ Hoa hoặc chữ thường từ Backend Golang
+      if (res && res.data) {
+        setAccounts(res.data.Accounts || res.data.accounts || []);
+        setStats(res.data.Stats || res.data.stats || null);
+      } else if (res && (res.Accounts || res.accounts)) {
+        // Trường hợp backend trả thẳng dữ liệu không bọc trong field 'data'
+        setAccounts(res.Accounts || res.accounts || []);
+        setStats(res.Stats || res.stats || null);
+      } else if (Array.isArray(res)) {
+        setAccounts(res);
+      } else {
+        setAccounts([]);
       }
     } catch (error) {
       console.error('Lỗi khi tải danh sách tài khoản:', error);
+      setAccounts([]);
     } finally {
       setIsLoading(false);
     }
@@ -29,12 +40,8 @@ export function useAccounts() {
   const changeStatus = async (userId: number, status: string) => {
     try {
       const res = await adminService.changeAccountStatus(userId, status);
-      if (res.success) {
-        // Tải lại dữ liệu sau khi cập nhật thành công
-        await fetchAccounts();
-        return true;
-      }
-      return false;
+      await fetchAccounts(); // Luôn load lại sau khi duyệt/từ chối
+      return res?.success !== false; // Xem như thành công trừ khi API báo lỗi rõ ràng
     } catch (error) {
       console.error('Lỗi khi cập nhật trạng thái:', error);
       return false;
@@ -52,11 +59,24 @@ export function useStoreTypes() {
     setIsLoading(true);
     try {
       const res = await adminService.getStoreTypes();
-      if (res.success && res.data) {
-        setStoreTypes(res.data);
+      console.log("📦 Dữ liệu StoreTypes từ API:", res);
+
+      if (res && res.data) {
+        if (Array.isArray(res.data.store_types)) {
+          setStoreTypes(res.data.store_types);
+        } else if (Array.isArray(res.data)) {
+          setStoreTypes(res.data);
+        } else {
+          setStoreTypes([]);
+        }
+      } else if (Array.isArray(res)) {
+        setStoreTypes(res);
+      } else {
+        setStoreTypes([]);
       }
     } catch (error) {
       console.error('Lỗi khi tải danh sách loại cửa hàng:', error);
+      setStoreTypes([]);
     } finally {
       setIsLoading(false);
     }
@@ -68,19 +88,19 @@ export function useStoreTypes() {
 
   const addStoreType = async (name: string) => {
     const res = await adminService.createStoreType(name);
-    if (res.success) await fetchStoreTypes();
+    await fetchStoreTypes(); 
     return res;
   };
 
   const editStoreType = async (id: number, name: string) => {
     const res = await adminService.updateStoreType(id, name);
-    if (res.success) await fetchStoreTypes();
+    await fetchStoreTypes(); 
     return res;
   };
 
   const removeStoreType = async (id: number) => {
     const res = await adminService.deleteStoreType(id);
-    if (res.success) await fetchStoreTypes();
+    await fetchStoreTypes(); 
     return res;
   };
 

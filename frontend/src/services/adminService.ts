@@ -8,7 +8,7 @@ export interface AdminAccountInfo {
   store_name: string;
   category: string;
   status: string;
-  address?: string; // BỔ SUNG TRƯỜNG ĐỊA CHỈ
+  address?: string; // Đã bổ sung trường địa chỉ
 }
 
 export interface AdminAccountsStats {
@@ -42,7 +42,15 @@ const getAuthHeaders = (): HeadersInit => {
 };
 
 export const adminService = {
-  // ================= Accounts =================
+  // ================= Public (Dành cho trang Đăng ký) =================
+  async getPublicStoreTypes() {
+    const response = await fetch(`${API_BASE_URL}/store-types/`, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return response.json();
+  },
+
+  // ================= Accounts (Dành cho Admin) =================
   async getAccounts() {
     const response = await fetch(`${API_BASE_URL}/admin/accounts`, {
       headers: getAuthHeaders(),
@@ -59,7 +67,7 @@ export const adminService = {
     return response.json();
   },
 
-  // ================= Store Types =================
+  // ================= Store Types (Dành cho Admin) =================
   async getStoreTypes() {
     const response = await fetch(`${API_BASE_URL}/admin/store-types`, {
       headers: getAuthHeaders(),

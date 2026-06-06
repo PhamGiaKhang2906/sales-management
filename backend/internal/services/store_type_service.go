@@ -26,6 +26,11 @@ func (s *StoreTypeService) GetAllStoreTypes() (*dto.StoreTypesListResponse, erro
 		return nil, errors.New("Lỗi khi lấy danh sách loại cửa hàng")
 	}
 
+	totalStores, popularTypeName, err := s.storeTypeRepo.GetStoreStatistics()
+	if err != nil {
+		return nil, errors.New("Lỗi khi lấy thống kê cửa hàng")
+	}
+
 	// Convert to response
 	var responses []dto.StoreTypeResponse
 	for _, st := range storeTypes {
@@ -36,8 +41,10 @@ func (s *StoreTypeService) GetAllStoreTypes() (*dto.StoreTypesListResponse, erro
 	}
 
 	return &dto.StoreTypesListResponse{
-		StoreTypes: responses,
-		Total:      len(responses),
+		StoreTypes:      responses,
+		Total:           len(responses),
+		TotalStores:     totalStores,
+		MostPopularType: popularTypeName,
 	}, nil
 }
 

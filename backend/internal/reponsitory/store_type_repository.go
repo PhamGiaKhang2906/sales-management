@@ -72,3 +72,34 @@ func (r *StoreTypeRepository) GetStoreTypeCount() (int64, error) {
 	result := r.DB.Model(&models.StoreType{}).Count(&count)
 	return count, result.Error
 }
+
+// GetStoreStatistics returns total number of stores and the most popular store type name
+func (r *StoreTypeRepository) GetStoreStatistics() (int64, string, error) {
+	var totalStores int64
+
+	if err := r.DB.Table("stores").Count(&totalStores).Error; err != nil {
+		return 0, "", err
+	}
+
+	var popularTypeName string
+	if totalStores > 0 {
+		var result struct {
+			Name string
+		}
+
+		err := r.DB.Table("store_types").
+			Select("store_types.name").
+			Joins("JOIN stores ON stores.store_type_id = store_types.id").
+			Group("store_types.id, store_types.name").
+			Order("COUNT(stores.id) DESC").
+			Limit(1).
+			Scan(&result).Error
+
+		if err != nil {
+			return totalStores, "", err
+		}
+		popularTypeName = result.Name
+	}
+
+	return totalStores, popularTypeName, nil
+}

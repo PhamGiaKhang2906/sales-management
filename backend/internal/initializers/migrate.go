@@ -26,7 +26,7 @@ func SyncDatabase() {
 	)
 
 	// Create default roles if they don't exist
-	roleNames := []string{"owner", "sales", "storemanage", "admin"}
+	roleNames := []string{"owner", "sales", "warehouse", "admin"}
 	for _, roleName := range roleNames {
 		var role models.Role
 		DB.Where(models.Role{RoleName: roleName}).FirstOrCreate(&role, models.Role{RoleName: roleName})

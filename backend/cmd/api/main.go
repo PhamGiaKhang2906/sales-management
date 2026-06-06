@@ -1,11 +1,11 @@
 package main
 
 import (
-	"time" // Import time for CORS configuration
+	"time"
 
 	"github.com/PhamGiaKhang2906/sales-management-backend/internal/initializers"
 	"github.com/PhamGiaKhang2906/sales-management-backend/internal/routes"
-	"github.com/gin-contrib/cors" // Import gin-contrib/cors
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 

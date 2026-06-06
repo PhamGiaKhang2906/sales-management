@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/authService';
-import { AuthAccount, storeAuthUser } from '@/features/auth/auth-store'; // Assuming you'll update auth-store
+import { AuthAccount, storeAuthUser, getAuthUser } from '@/features/auth/auth-store';
 import { LoginRequest, RegisterRequest } from '@/backend-types';
+
+// Định nghĩa kiểu dữ liệu AuthRole ngay tại đây để TypeScript hiểu
+export type AuthRole = 'owner' | 'sales' | 'admin' | 'warehouse';
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -11,12 +14,9 @@ export function useAuth() {
   const router = useRouter();
 
   useEffect(() => {
-    // On mount, check for existing session or stored user
-    // For now, we'll mock it or retrieve from local storage if available
-    const storedUser = localStorage.getItem('authUser');
+    const storedUser = getAuthUser();
     if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
+      setUser(storedUser);
       setIsAuthenticated(true);
     } else {
       setIsAuthenticated(false);
@@ -31,13 +31,14 @@ export function useAuth() {
       if (response.success && response.data) {
         const authUser: AuthAccount = {
           username: response.data.username,
-          name: credentials.username, // Assuming name from username for now
-          role: response.data.role_id === 1 ? 'owner' : 'sales', // Map role_id to role name
+          name: credentials.username,
+          role: mapRoleIdToAuthRole(response.data.role_id),
+          roleId: response.data.role_id,
         };
         storeAuthUser(authUser);
         setUser(authUser);
         setIsAuthenticated(true);
-        router.push(authUser.role === 'owner' ? '/owner' : '/sales'); // Redirect based on role
+        router.push(getRedirectPath(authUser.role));
         return { success: true, message: response.message };
       } else {
         return { success: false, message: response.message || 'Đăng nhập thất bại' };
@@ -83,4 +84,36 @@ export function useAuth() {
     register,
     logout,
   };
+}
+
+function mapRoleIdToAuthRole(roleId: number): AuthRole {
+  switch (roleId) {
+    case 1: // owner
+      return 'owner';
+    case 2: // sales
+      return 'sales';
+    case 3: // storemanage (warehouse)
+      return 'warehouse';
+    case 4: // admin
+      return 'admin';
+    default:
+      console.warn(`Unknown roleId: ${roleId}. Defaulting to 'admin' for safety.`);
+      return 'admin'; // Changed default to 'admin'
+  }
+}
+
+function getRedirectPath(role: AuthRole): string {
+  switch (role) {
+    case 'owner':
+      return '/owner';
+    case 'sales':
+      return '/sales';
+    case 'warehouse':
+      return '/warehouse';
+    case 'admin':
+      return '/admin';
+    default:
+      console.warn(`Unknown AuthRole: ${role}. Defaulting to '/'.`);
+      return '/';
+  }
 }

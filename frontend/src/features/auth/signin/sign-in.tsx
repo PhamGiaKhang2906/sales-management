@@ -78,7 +78,7 @@ export function LoginPage() {
               </div>
               <h2 className="text-3xl font-bold text-slate-900">Đăng nhập</h2>
               <p className="mt-3 text-sm leading-6 text-slate-600">
-                Hệ thống quản lý bán hàng. Form đăng nhập được căn giữa theo đúng bố cục mới.
+                Hệ thống quản lý bán hàng
               </p>
             </div>
 

@@ -3,38 +3,14 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { DataTable } from '../../components/layout/DataTable';
 import { Modal } from '../../components/layout/Modal';
-
-interface StoreType {
-  id: number;
-  name: string;
-  totalStores: number;
-  createdDate: string;
-}
+import { useStoreTypes } from '@/hooks/useAdmin';
+import { StoreTypeDTO } from '@/services/adminService';
 
 export function StoreTypesPage() {
-  const [storeTypes, setStoreTypes] = useState<StoreType[]>([
-    { id: 1, name: 'Thời trang', totalStores: 125, createdDate: '2026-01-15' },
-    { id: 2, name: 'Điện thoại & Điện máy', totalStores: 98, createdDate: '2026-01-15' },
-    { id: 3, name: 'Vật liệu xây dựng', totalStores: 45, createdDate: '2026-01-15' },
-    { id: 4, name: 'Nhà thuốc', totalStores: 67, createdDate: '2026-01-15' },
-    { id: 5, name: 'Mẹ & Bé', totalStores: 82, createdDate: '2026-01-15' },
-    { id: 6, name: 'Sách & Văn phòng phẩm', totalStores: 54, createdDate: '2026-01-15' },
-    { id: 7, name: 'Sản xuất', totalStores: 38, createdDate: '2026-01-15' },
-    { id: 8, name: 'Tạp hóa & Siêu thị', totalStores: 156, createdDate: '2026-01-15' },
-    { id: 9, name: 'Mỹ phẩm', totalStores: 91, createdDate: '2026-01-15' },
-    { id: 10, name: 'Nông sản & Thực phẩm', totalStores: 73, createdDate: '2026-01-15' },
-    { id: 11, name: 'Xe, Máy móc', totalStores: 42, createdDate: '2026-01-15' },
-    { id: 12, name: 'Nội thất & Gia dụng', totalStores: 88, createdDate: '2026-01-15' },
-    { id: 13, name: 'Hoa & Quà tặng', totalStores: 34, createdDate: '2026-01-15' },
-    { id: 14, name: 'Khác', totalStores: 27, createdDate: '2026-01-15' },
-  ]);
-
+  const { storeTypes, isLoading, addStoreType, editStoreType, removeStoreType } = useStoreTypes();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingType, setEditingType] = useState<StoreType | null>(null);
-  
-  const [formData, setFormData] = useState({
-    name: '',
-  });
+  const [editingType, setEditingType] = useState<StoreTypeDTO | null>(null);
+  const [formData, setFormData] = useState({ name: '' });
 
   const columns = [
     { key: 'name', label: 'Tên loại cửa hàng' },
@@ -43,11 +19,15 @@ export function StoreTypesPage() {
       label: 'Số cửa hàng',
       render: (value: number) => (
         <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">
-          {value}
+          {value || 0}
         </span>
       ),
     },
-    { key: 'createdDate', label: 'Ngày tạo' },
+    { 
+      key: 'CreatedAt', 
+      label: 'Ngày tạo',
+      render: (value: string) => value ? new Date(value).toLocaleDateString('vi-VN') : 'Mới'
+    },
   ];
 
   const handleAdd = () => {
@@ -56,44 +36,42 @@ export function StoreTypesPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (type: StoreType) => {
+  const handleEdit = (type: StoreTypeDTO) => {
     setEditingType(type);
     setFormData({ name: type.name });
     setIsModalOpen(true);
   };
 
-  const handleDelete = (type: StoreType) => {
-    if (type.totalStores > 0) {
-      alert(`Không thể xóa loại cửa hàng "${type.name}" vì đang có ${type.totalStores} cửa hàng sử dụng!`);
-      return;
-    }
+  const handleDelete = async (type: StoreTypeDTO) => {
     if (confirm(`Bạn có chắc muốn xóa loại cửa hàng "${type.name}"?`)) {
-      setStoreTypes(storeTypes.filter(t => t.id !== type.id));
+      const res = await removeStoreType(type.ID);
+      if (res && res.success) {
+        alert(res.message || "Xóa loại cửa hàng thành công!");
+      } else {
+        alert("Lỗi: " + (res?.message || "Không thể kết nối đến server"));
+      }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    let res; // Biến lưu kết quả trả về từ API
+    
     if (editingType) {
-      setStoreTypes(
-        storeTypes.map(t =>
-          t.id === editingType.id
-            ? { ...t, ...formData }
-            : t
-        )
-      );
+      res = await editStoreType(editingType.ID, formData.name);
     } else {
-      setStoreTypes([
-        ...storeTypes,
-        {
-          id: Date.now(),
-          ...formData,
-          totalStores: 0,
-          createdDate: new Date().toISOString().split('T')[0],
-        },
-      ]);
+      res = await addStoreType(formData.name);
     }
-    setIsModalOpen(false);
+
+    // Kiểm tra kết quả từ backend
+    if (res && res.success) {
+      alert(res.message || "Lưu loại cửa hàng thành công!");
+      setIsModalOpen(false);
+    } else {
+      // Nếu thất bại, giữ nguyên Modal và hiện lỗi để người dùng biết
+      alert("Lỗi: " + (res?.message || "Không thể kết nối đến server"));
+    }
   };
 
   return (
@@ -112,7 +90,6 @@ export function StoreTypesPage() {
         </button>
       </div>
 
-      {/* Đã đổi md:grid-cols-4 thành md:grid-cols-3 để hiển thị 3 ô cân đối */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-gradient-to-br from-emerald-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
           <p className="text-emerald-100 mb-2">Tổng loại cửa hàng</p>
@@ -120,60 +97,46 @@ export function StoreTypesPage() {
         </div>
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
           <p className="text-blue-100 mb-2">Tổng cửa hàng</p>
-          <p className="font-bold text-4xl">{storeTypes.reduce((sum, t) => sum + t.totalStores, 0)}</p>
+          <p className="font-bold text-4xl">
+            {storeTypes.reduce((sum, t) => sum + (t.totalStores || 0), 0)}
+          </p>
         </div>
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
-          <p className="text-purple-100 mb-2">Phổ biến nhất</p>
+          <p className="text-purple-100 mb-2">Mới cập nhật</p>
           <p className="font-bold text-xl truncate">
-            {storeTypes.sort((a, b) => b.totalStores - a.totalStores)[0]?.name}
+            {storeTypes.length > 0 ? storeTypes[storeTypes.length - 1].name : 'Chưa có dữ liệu'}
           </p>
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-md">
-        <DataTable
-          columns={columns}
-          data={storeTypes}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        {isLoading ? (
+          <div className="p-8 text-center text-gray-500 font-medium">Đang tải dữ liệu...</div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={storeTypes}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
       </div>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingType ? 'Chỉnh sửa loại cửa hàng' : 'Thêm loại cửa hàng mới'}
-      >
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingType ? 'Chỉnh sửa' : 'Thêm mới'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block font-medium text-gray-700 mb-2">
-              Tên loại cửa hàng <span className="text-red-500">*</span>
-            </label>
+            <label className="block font-medium text-gray-700 mb-2">Tên loại cửa hàng <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              placeholder="Ví dụ: Thời trang"
-              required
-              autoFocus
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500"
+              required autoFocus
             />
           </div>
-
           <div className="flex gap-3 justify-end pt-4">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
-            >
-              {editingType ? 'Cập nhật' : 'Thêm mới'}
-            </button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 border rounded-lg">Hủy</button>
+            <button type="submit" className="px-6 py-2 bg-emerald-600 text-white rounded-lg">{editingType ? 'Cập nhật' : 'Thêm mới'}</button>
           </div>
         </form>
       </Modal>

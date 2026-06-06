@@ -29,6 +29,13 @@ export function useAuth() {
     try {
       const response = await authService.login(credentials);
       if (response.success && response.data) {
+        
+        // BỔ SUNG QUAN TRỌNG: Lưu token vào localStorage để adminService lấy dùng
+        // (Dùng 'as any' phòng trường hợp bạn chưa khai báo trường token trong LoginResponse ở file backend-types.ts)
+        if ((response.data as any).token) {
+          localStorage.setItem('token', (response.data as any).token);
+        }
+
         const authUser: AuthAccount = {
           username: response.data.username,
           name: credentials.username,
@@ -71,6 +78,7 @@ export function useAuth() {
 
   const logout = () => {
     localStorage.removeItem('authUser');
+    localStorage.removeItem('token'); // BỔ SUNG: Xóa token khi đăng xuất
     setUser(null);
     setIsAuthenticated(false);
     router.push('/auth/signin');

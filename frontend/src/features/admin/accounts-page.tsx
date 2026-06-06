@@ -1,94 +1,38 @@
 "use client";
 import { useState } from 'react';
-import { Users, ShoppingBag, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Users, ShoppingBag, CheckCircle, XCircle } from 'lucide-react';
 import { DataTable } from '../../components/layout/DataTable';
 import { Modal } from '../../components/layout/Modal';
-
-interface UserAccount {
-  id: number;
-  fullName: string;
-  phone: string;
-  email: string;
-  storeName: string;
-  address: string;
-  categories: string[];
-  status: 'pending' | 'approved' | 'rejected';
-  registeredDate: string;
-}
+import { useAccounts } from '@/hooks/useAdmin';
+import { AdminAccountInfo } from '@/services/adminService';
 
 export function AccountsPage() {
-  const [accounts, setAccounts] = useState<UserAccount[]>([
-    {
-      id: 1,
-      fullName: 'Nguyễn Văn A',
-      phone: '0901234567',
-      email: 'a@example.com',
-      storeName: 'Cửa hàng Thời trang ABC',
-      address: 'Hà Nội',
-      categories: ['Thời trang', 'Mỹ phẩm'],
-      status: 'pending',
-      registeredDate: '2026-05-28',
-    },
-    {
-      id: 2,
-      fullName: 'Trần Thị B',
-      phone: '0902345678',
-      email: 'b@example.com',
-      storeName: 'Siêu thị Mini B',
-      address: 'TP HCM',
-      categories: ['Tạp hóa & Siêu thị', 'Nông sản & Thực phẩm'],
-      status: 'approved',
-      registeredDate: '2026-05-27',
-    },
-    {
-      id: 3,
-      fullName: 'Lê Văn C',
-      phone: '0903456789',
-      email: 'c@example.com',
-      storeName: 'Cửa hàng Điện máy C',
-      address: 'Đà Nẵng',
-      categories: ['Điện thoại & Điện máy'],
-      status: 'approved',
-      registeredDate: '2026-05-26',
-    },
-  ]);
-
-  const [viewingAccount, setViewingAccount] = useState<UserAccount | null>(null);
+  const { accounts, stats, isLoading, changeStatus } = useAccounts();
+  const [viewingAccount, setViewingAccount] = useState<AdminAccountInfo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const columns = [
-    { key: 'fullName', label: 'Họ và tên' },
+    { key: 'fullname', label: 'Họ và tên' },
     { key: 'phone', label: 'Số điện thoại' },
-    { key: 'storeName', label: 'Tên cửa hàng' },
+    { key: 'store_name', label: 'Tên cửa hàng' },
     {
-      key: 'categories',
+      key: 'category',
       label: 'Danh mục',
-      render: (value: string[]) => (
-        <div className="flex flex-wrap gap-1">
-          {value.slice(0, 2).map((cat, idx) => (
-            <span key={idx} className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">
-              {cat}
-            </span>
-          ))}
-          {value.length > 2 && (
-            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-              +{value.length - 2}
-            </span>
-          )}
-        </div>
+      render: (value: string) => (
+        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">
+          {value || 'Khác'}
+        </span>
       ),
     },
-    { key: 'registeredDate', label: 'Ngày đăng ký' },
     {
       key: 'status',
       label: 'Trạng thái',
       render: (value: string) => {
-        const statusConfig = {
-          pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Chờ duyệt' },
-          approved: { bg: 'bg-green-100', text: 'text-green-700', label: 'Đã duyệt' },
-          rejected: { bg: 'bg-red-100', text: 'text-red-700', label: 'Từ chối' },
-        };
-        const config = statusConfig[value as keyof typeof statusConfig];
+        let config = { bg: 'bg-gray-100', text: 'text-gray-700', label: value };
+        if (value === 'Chờ duyệt') config = { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Chờ duyệt' };
+        if (value === 'Đã duyệt' || value === 'Đã_duyệt') config = { bg: 'bg-green-100', text: 'text-green-700', label: 'Đã duyệt' };
+        if (value === 'Từ chối' || value === 'Từ_chối') config = { bg: 'bg-red-100', text: 'text-red-700', label: 'Từ chối' };
+
         return (
           <span className={`px-2 py-1 rounded text-sm ${config.bg} ${config.text}`}>
             {config.label}
@@ -98,26 +42,19 @@ export function AccountsPage() {
     },
   ];
 
-  const handleView = (account: UserAccount) => {
+  const handleView = (account: AdminAccountInfo) => {
     setViewingAccount(account);
     setIsModalOpen(true);
   };
 
-  const handleApprove = (account: UserAccount) => {
-    setAccounts(accounts.map(a => a.id === account.id ? { ...a, status: 'approved' } : a));
+  const handleApprove = async (account: AdminAccountInfo) => {
+    await changeStatus(account.user_id, "Đã_duyệt");
   };
 
-  const handleReject = (account: UserAccount) => {
-    if (confirm(`Bạn có chắc muốn từ chối tài khoản "${account.storeName}"?`)) {
-      setAccounts(accounts.map(a => a.id === account.id ? { ...a, status: 'rejected' } : a));
+  const handleReject = async (account: AdminAccountInfo) => {
+    if (confirm(`Bạn có chắc muốn từ chối tài khoản "${account.store_name}"?`)) {
+      await changeStatus(account.user_id, "Từ_chối");
     }
-  };
-
-  const stats = {
-    total: accounts.length,
-    pending: accounts.filter(a => a.status === 'pending').length,
-    approved: accounts.filter(a => a.status === 'approved').length,
-    rejected: accounts.filter(a => a.status === 'rejected').length,
   };
 
   return (
@@ -132,7 +69,7 @@ export function AccountsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 mb-1">Tổng số tài khoản</p>
-              <p className="font-bold text-3xl text-gray-800">{stats.total}</p>
+              <p className="font-bold text-3xl text-gray-800">{stats?.total_accounts || 0}</p>
             </div>
             <Users className="w-12 h-12 text-blue-500 opacity-20" />
           </div>
@@ -142,7 +79,7 @@ export function AccountsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 mb-1">Chờ duyệt</p>
-              <p className="font-bold text-3xl text-gray-800">{stats.pending}</p>
+              <p className="font-bold text-3xl text-gray-800">{stats?.pending_count || 0}</p>
             </div>
             <ShoppingBag className="w-12 h-12 text-yellow-500 opacity-20" />
           </div>
@@ -152,7 +89,7 @@ export function AccountsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 mb-1">Đã duyệt</p>
-              <p className="font-bold text-3xl text-gray-800">{stats.approved}</p>
+              <p className="font-bold text-3xl text-gray-800">{stats?.approved_count || 0}</p>
             </div>
             <CheckCircle className="w-12 h-12 text-green-500 opacity-20" />
           </div>
@@ -162,7 +99,7 @@ export function AccountsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 mb-1">Từ chối</p>
-              <p className="font-bold text-3xl text-gray-800">{stats.rejected}</p>
+              <p className="font-bold text-3xl text-gray-800">{stats?.rejected_count || 0}</p>
             </div>
             <XCircle className="w-12 h-12 text-red-500 opacity-20" />
           </div>
@@ -170,104 +107,64 @@ export function AccountsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-md">
-        <DataTable
-          columns={columns}
-          data={accounts}
-          onView={handleView}
-          actions={true}
-        />
+        {isLoading ? (
+          <div className="p-8 text-center text-gray-500 font-medium">Đang tải dữ liệu...</div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={accounts}
+            onView={handleView}
+            actions={true}
+          />
+        )}
       </div>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Chi tiết tài khoản"
-        size="lg"
-      >
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Chi tiết tài khoản" size="lg">
         {viewingAccount && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <p className="text-gray-500 mb-1">Họ và tên</p>
-                <p className="font-medium text-lg">{viewingAccount.fullName}</p>
+                <p className="font-medium text-lg">{viewingAccount.fullname}</p>
               </div>
               <div>
                 <p className="text-gray-500 mb-1">Số điện thoại</p>
                 <p className="font-medium text-lg">{viewingAccount.phone}</p>
               </div>
-              <div>
-                <p className="text-gray-500 mb-1">Email</p>
-                <p className="font-medium text-lg">{viewingAccount.email || 'Chưa cập nhật'}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 mb-1">Ngày đăng ký</p>
-                <p className="font-medium text-lg">{viewingAccount.registeredDate}</p>
-              </div>
             </div>
 
             <div>
               <p className="text-gray-500 mb-1">Tên cửa hàng</p>
-              <p className="font-medium text-lg">{viewingAccount.storeName}</p>
-            </div>
-
-            <div>
-              <p className="text-gray-500 mb-1">Địa chỉ</p>
-              <p className="font-medium text-lg">{viewingAccount.address}</p>
+              <p className="font-medium text-lg">{viewingAccount.store_name}</p>
             </div>
 
             <div>
               <p className="text-gray-500 mb-2">Danh mục kinh doanh</p>
-              <div className="flex flex-wrap gap-2">
-                {viewingAccount.categories.map((cat, idx) => (
-                  <span key={idx} className="px-3 py-2 bg-emerald-100 text-emerald-700 rounded-lg font-medium">
-                    {cat}
-                  </span>
-                ))}
-              </div>
+              <span className="px-3 py-2 bg-emerald-100 text-emerald-700 rounded-lg font-medium">
+                {viewingAccount.category || 'Chưa cập nhật'}
+              </span>
             </div>
 
             <div>
-              <p className="text-gray-500 mb-2">Trạng thái</p>
-              <div className="inline-block">
-                {viewingAccount.status === 'pending' && (
-                  <span className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg font-medium">
-                    Chờ duyệt
-                  </span>
-                )}
-                {viewingAccount.status === 'approved' && (
-                  <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium">
-                    Đã duyệt
-                  </span>
-                )}
-                {viewingAccount.status === 'rejected' && (
-                  <span className="px-4 py-2 bg-red-100 text-red-700 rounded-lg font-medium">
-                    Từ chối
-                  </span>
-                )}
-              </div>
+              <p className="text-gray-500 mb-2">Trạng thái hiện tại</p>
+              <span className="font-medium text-gray-800 border px-3 py-1 rounded">
+                {viewingAccount.status}
+              </span>
             </div>
 
-            {viewingAccount.status === 'pending' && (
+            {(viewingAccount.status === 'Chờ duyệt' || viewingAccount.status === 'pending') && (
               <div className="flex gap-3 pt-4 border-t border-gray-200">
                 <button
-                  onClick={() => {
-                    handleApprove(viewingAccount);
-                    setIsModalOpen(false);
-                  }}
+                  onClick={() => { handleApprove(viewingAccount); setIsModalOpen(false); }}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium"
                 >
-                  <CheckCircle className="w-5 h-5" />
-                  Duyệt tài khoản
+                  <CheckCircle className="w-5 h-5" /> Duyệt tài khoản
                 </button>
                 <button
-                  onClick={() => {
-                    handleReject(viewingAccount);
-                    setIsModalOpen(false);
-                  }}
+                  onClick={() => { handleReject(viewingAccount); setIsModalOpen(false); }}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
                 >
-                  <XCircle className="w-5 h-5" />
-                  Từ chối
+                  <XCircle className="w-5 h-5" /> Từ chối
                 </button>
               </div>
             )}

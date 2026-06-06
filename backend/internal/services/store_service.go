@@ -34,11 +34,15 @@ func (s *StoreService) GetStoreByOwnerUserID(userID uint) (*dto.OwnerStoreRespon
 	}
 
 	response := dto.OwnerStoreResponse{
-		ID:          store.ID,
-		Name:        store.Name,
-		Address:     store.Address,
-		Phone:       store.Phone,
-		StoreTypeID: store.StoreTypeID,
+		ID:           store.ID,
+		Name:         store.Name,
+		TaxCode:      store.TaxCode,
+		Address:      store.Address,
+		Phone:        store.Phone,
+		Email:        store.Email,
+		Website:      store.Website,
+		OpeningHours: store.OpeningHours,
+		StoreTypeID:  store.StoreTypeID,
 	}
 	if store.StoreType != nil {
 		response.StoreTypeName = store.StoreType.Name
@@ -79,8 +83,12 @@ func (s *StoreService) UpdateStoreByOwnerUserID(userID uint, req *dto.OwnerStore
 	}
 
 	store.Name = req.Name
+	store.TaxCode = req.TaxCode
 	store.Address = req.Address
 	store.Phone = req.Phone
+	store.Email = req.Email
+	store.Website = req.Website
+	store.OpeningHours = req.OpeningHours
 
 	if err := s.storeRepo.UpdateStore(store); err != nil {
 		return nil, errors.New("Lỗi khi cập nhật cửa hàng")
@@ -92,11 +100,15 @@ func (s *StoreService) UpdateStoreByOwnerUserID(userID uint, req *dto.OwnerStore
 	}
 
 	response := dto.OwnerStoreResponse{
-		ID:          updatedStore.ID,
-		Name:        updatedStore.Name,
-		Address:     updatedStore.Address,
-		Phone:       updatedStore.Phone,
-		StoreTypeID: updatedStore.StoreTypeID,
+		ID:           updatedStore.ID,
+		Name:         updatedStore.Name,
+		TaxCode:      updatedStore.TaxCode,
+		Address:      updatedStore.Address,
+		Phone:        updatedStore.Phone,
+		Email:        updatedStore.Email,
+		Website:      updatedStore.Website,
+		OpeningHours: updatedStore.OpeningHours,
+		StoreTypeID:  updatedStore.StoreTypeID,
 	}
 	if updatedStore.StoreType != nil {
 		response.StoreTypeName = updatedStore.StoreType.Name

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, Trash2, User, Phone, MapPin, Loader2 } from 'lucide-react';
+import { Search, Trash2, User, Phone, MapPin, Mail, Loader2 } from 'lucide-react';
 
 // Khai báo kiểu dữ liệu cho Sản phẩm trả về từ API
 interface Product {
@@ -151,8 +151,17 @@ export function SalesOrdersPage() {
   };
 
   // Tính toán tiền
-  const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const finalAmount = Math.max(0, totalAmount - discount);
+  const totalAmount = orderItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  const discountAmount = totalAmount * (discount / 100);
+
+  const finalAmount = Math.max(
+    0,
+    totalAmount - discountAmount
+  );
 
   // Không render UI gốc cho đến khi client hydration xong (Tránh lỗi Next.js)
   if (!isClient) return null;
@@ -258,24 +267,56 @@ export function SalesOrdersPage() {
           </div>
 
           {/* Khu dưới (2/10): Tính tiền */}
-          <div className="h-[20%] bg-white rounded-lg shadow-sm p-4 flex flex-col justify-between">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600 font-medium">Tổng tiền ({orderItems.length} sản phẩm):</span>
-              <span className="font-bold text-gray-800">{totalAmount.toLocaleString('vi-VN')} đ</span>
+          <div className="min-h-[220px] bg-white rounded-lg shadow-sm p-4 flex flex-col gap-4">
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-700">
+                Mã khuyến mãi (%):
+              </span>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={discount === 0 ? '' : discount}
+                  onChange={(e) => setDiscount(Number(e.target.value))}
+                  className="w-24 h-9 text-sm text-right border rounded px-2 outline-none focus:border-blue-500"
+                />
+                <span className="text-sm text-gray-700">%</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center mb-2 border-b pb-2">
-              <span className="text-gray-600 font-medium">Khuyến mãi/Giảm giá (VND):</span>
-              <input 
-                type="number" 
-                value={discount === 0 ? '' : discount}
-                onChange={(e) => setDiscount(Number(e.target.value))}
-                className="w-32 text-right border rounded p-1 outline-none focus:border-blue-500 font-semibold"
-              />
+
+            <div className="flex justify-between items-center border-b pb-3">
+              <span className="text-sm font-medium text-gray-700">
+                Tổng tiền ({orderItems.length} sản phẩm):
+              </span>
+
+              <span className="text-sm font-semibold text-gray-700">
+                {totalAmount.toLocaleString('vi-VN')} đ
+              </span>
             </div>
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-xl font-bold text-gray-800">Khách cần trả:</span>
-              <span className="text-2xl font-bold text-blue-600">{finalAmount.toLocaleString('vi-VN')} đ</span>
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-700">
+                Tiền giảm:
+              </span>
+
+              <span className="text-sm font-semibold text-gray-700">
+                -{discountAmount.toLocaleString('vi-VN')} đ
+              </span>
             </div>
+
+            <div className="flex justify-between items-center pt-1">
+              <span className="text-sm font-medium text-gray-700">
+                Khách cần trả:
+              </span>
+
+              <span className="text-sm font-semibold text-gray-700">
+                {finalAmount.toLocaleString('vi-VN')} đ
+              </span>
+            </div>
+
           </div>
         </div>
 
@@ -291,6 +332,14 @@ export function SalesOrdersPage() {
               <div className="relative">
                 <Phone className="absolute top-3 left-3 text-gray-400" size={20} />
                 <input type="tel" placeholder="Số điện thoại" className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500" />
+              </div>
+              <div className="relative">
+                <Mail className="absolute top-3 left-3 text-gray-400" size={20} />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500"
+                />
               </div>
               <div className="relative">
                 <MapPin className="absolute top-3 left-3 text-gray-400" size={20} />

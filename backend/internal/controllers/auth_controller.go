@@ -95,6 +95,7 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 	data := map[string]interface{}{
 		"user_id":  response.UserID,
 		"username": response.Username,
+		"token":    token,
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Đăng nhập thành công", data)

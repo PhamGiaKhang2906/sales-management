@@ -4,7 +4,6 @@ import { authService } from '@/services/authService';
 import { AuthAccount, storeAuthUser, getAuthUser } from '@/features/auth/auth-store';
 import { LoginRequest, RegisterRequest } from '@/backend-types';
 
-// Định nghĩa kiểu dữ liệu AuthRole ngay tại đây để TypeScript hiểu
 export type AuthRole = 'owner' | 'sales' | 'admin' | 'warehouse';
 
 export function useAuth() {
@@ -29,6 +28,11 @@ export function useAuth() {
     try {
       const response = await authService.login(credentials);
       if (response.success && response.data) {
+        
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
+
         const authUser: AuthAccount = {
           username: response.data.username,
           name: credentials.username,
@@ -55,9 +59,8 @@ export function useAuth() {
     try {
       const response = await authService.register(registrationData);
       if (response.success) {
-        // After successful registration, owner needs to be approved by admin
-        // No direct login after registration for owner roles
-        router.push('/auth/signin?registrationSuccess=true'); // Redirect to login with success message
+        // SỬA ĐƯỜNG LINK TẠI ĐÂY
+        router.push('/signin?registrationSuccess=true'); 
         return { success: true, message: response.message };
       } else {
         return { success: false, message: response.message || 'Đăng ký thất bại' };
@@ -71,9 +74,11 @@ export function useAuth() {
 
   const logout = () => {
     localStorage.removeItem('authUser');
+    localStorage.removeItem('token'); 
     setUser(null);
     setIsAuthenticated(false);
-    router.push('/auth/signin');
+    // SỬA ĐƯỜNG LINK TẠI ĐÂY: Trở về trang /signin
+    router.push('/signin');
   };
 
   return {
@@ -88,17 +93,17 @@ export function useAuth() {
 
 function mapRoleIdToAuthRole(roleId: number): AuthRole {
   switch (roleId) {
-    case 1: // owner
+    case 1:
       return 'owner';
-    case 2: // sales
+    case 2:
       return 'sales';
-    case 3: // storemanage (warehouse)
+    case 3:
       return 'warehouse';
-    case 4: // admin
+    case 4:
       return 'admin';
     default:
       console.warn(`Unknown roleId: ${roleId}. Defaulting to 'admin' for safety.`);
-      return 'admin'; // Changed default to 'admin'
+      return 'admin';
   }
 }
 
@@ -113,7 +118,6 @@ function getRedirectPath(role: AuthRole): string {
     case 'admin':
       return '/admin';
     default:
-      console.warn(`Unknown AuthRole: ${role}. Defaulting to '/'.`);
       return '/';
   }
 }

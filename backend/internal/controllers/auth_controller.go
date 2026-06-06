@@ -91,11 +91,13 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 		true,               // HttpOnly
 	)
 
-	// Send success response
+	// Send success response (ĐÃ BỔ SUNG ROLE_ID VÀ STORE_ID)
 	data := map[string]interface{}{
 		"user_id":  response.UserID,
 		"username": response.Username,
-		"token":    token,
+		"role_id":  response.RoleID,  // Sửa lỗi: Thêm RoleID để frontend nhận diện
+		"store_id": response.StoreID, // Sửa lỗi: Thêm StoreID
+		"token":    token,            // Chứa token cho frontend lưu vào localStorage
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Đăng nhập thành công", data)

@@ -31,6 +31,13 @@ func (r *StoreTypeRepository) GetStoreTypeByID(id uint) (*models.StoreType, erro
 	return &storeType, nil
 }
 
+// GetListStoreTypeName retrieves the name of a store type in database
+func (r *StoreTypeRepository) GetListStoreTypeName() ([]string, error) {
+	var names []string
+	result := r.DB.Model(&models.StoreType{}).Pluck("name", &names)
+	return names, result.Error
+}
+
 // CheckStoreTypeNameExists checks if store type name already exists
 func (r *StoreTypeRepository) CheckStoreTypeNameExists(name string) (bool, error) {
 	var count int64

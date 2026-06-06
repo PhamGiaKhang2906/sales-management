@@ -10,9 +10,10 @@ import (
 )
 
 type AuthService struct {
-	userRepo  *repository.UserRepository
-	storeRepo *repository.StoreRepository
-	roleRepo  *repository.RoleRepository
+	userRepo      *repository.UserRepository
+	storeRepo     *repository.StoreRepository
+	roleRepo      *repository.RoleRepository
+	storetypeRepo *repository.StoreTypeRepository
 }
 
 // NewAuthService creates a new auth service

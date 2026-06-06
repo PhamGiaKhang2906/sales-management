@@ -27,7 +27,6 @@ export function Sidebar({ role, currentPath, isOpen, onClose }: SidebarProps) {
     { id: 'sales-orders', href: '/sales/sales-orders', label: 'Đơn bán hàng', icon: ShoppingCart },
     { id: 'sales-returns', href: '/sales/returns', label: 'Đơn trả hàng', icon: FileText },
     { id: 'sales-personal-stats', href: '/sales/personal-stats', label: 'Thống kê cá nhân', icon: TrendingUp },
-    { id: 'sales-salary', href: '/sales/salary', label: 'Lương thưởng', icon: DollarSign },
   ];
 
   const warehouseMenuItems = [

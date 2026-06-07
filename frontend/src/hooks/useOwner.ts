@@ -159,33 +159,52 @@ export function useProducts(filters?: any) {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // Wrap mutating operations so UI refreshes after success
-  const createProductWrapper = async (data: ProductCreatePayload) => {
-    // map frontend fields to backend expected fields
+  const createProductWrapper = async (data: any) => {
+    // robust mapping: accept multiple field name variants and auto-generate SKU if missing
+    const getCategoryId = () => data.category_id ?? data.CategoryID ?? data.Category?.id ?? data.Category?.ID ?? 0;
+    const getSupplierId = () => data.supplier_id ?? data.SupplierID ?? data.supplier_id ?? data.Supplier?.id ?? data.Supplier?.ID ?? 0;
+    const getName = () => data.name ?? data.Name ?? '';
+    let sku = data.sku ?? data.SKU ?? data.code ?? data.Code ?? '';
+    if (!sku) {
+      const base = (getName() || 'item').toString().trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      sku = `${base || 'item'}-${Date.now().toString().slice(-5)}`;
+    }
+
     const payload: any = {
-      category_id: data.category_id,
-      supplier_id: (data as any).supplier_id || data.supplier_id,
-      sku: (data as any).code || (data as any).sku || '',
-      barcode: (data as any).barcode || '',
-      name: data.name,
-      unit: (data as any).unit || '',
-      price: data.price,
-      status: (data as any).status || 'active',
+      category_id: getCategoryId(),
+      supplier_id: getSupplierId(),
+      sku,
+      barcode: data.barcode ?? data.Barcode ?? '',
+      name: getName(),
+      unit: data.unit ?? data.Unit ?? '',
+      price: Number(data.price ?? data.Price ?? 0),
+      status: data.status ?? data.Status ?? 'active',
     };
+
     const res = await ownerService.products.create(payload);
     await fetchData();
     return res;
   };
 
-  const updateProductWrapper = async (id: number, data: ProductUpdatePayload) => {
+  const updateProductWrapper = async (id: number, data: any) => {
+    const getCategoryId = () => data.category_id ?? data.CategoryID ?? data.Category?.id ?? data.Category?.ID ?? 0;
+    const getSupplierId = () => data.supplier_id ?? data.SupplierID ?? data.supplier_id ?? data.Supplier?.id ?? data.Supplier?.ID ?? 0;
+    const getName = () => data.name ?? data.Name ?? '';
+    let sku = data.sku ?? data.SKU ?? data.code ?? data.Code ?? '';
+    if (!sku) {
+      const base = (getName() || 'item').toString().trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      sku = `${base || 'item'}-${Date.now().toString().slice(-5)}`;
+    }
+
     const payload: any = {
-      category_id: data.category_id,
-      supplier_id: (data as any).supplier_id || data.supplier_id,
-      sku: (data as any).code || (data as any).sku || '',
-      barcode: (data as any).barcode || '',
-      name: data.name,
-      unit: (data as any).unit || '',
-      price: data.price || 0,
-      status: (data as any).status || 'active',
+      category_id: getCategoryId(),
+      supplier_id: getSupplierId(),
+      sku,
+      barcode: data.barcode ?? data.Barcode ?? '',
+      name: getName(),
+      unit: data.unit ?? data.Unit ?? '',
+      price: Number(data.price ?? data.Price ?? 0),
+      status: data.status ?? data.Status ?? 'active',
     };
     const res = await ownerService.products.update(id, payload);
     await fetchData();

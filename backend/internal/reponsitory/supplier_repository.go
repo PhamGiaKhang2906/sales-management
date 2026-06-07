@@ -34,7 +34,8 @@ func (r *SupplierRepository) GetSupplierByID(id uint) (*models.Supplier, error) 
 // GetSupplierByIDAndStore retrieves a supplier by ID and storeID
 func (r *SupplierRepository) GetSupplierByIDAndStore(id uint, storeID uint) (*models.Supplier, error) {
 	var supplier models.Supplier
-	result := r.DB.Where("id = ? AND store_id = ?", id, storeID).First(&supplier)
+	// allow suppliers that belong to the specific store or are global (store_id = 0)
+	result := r.DB.Where("id = ? AND (store_id = ? OR store_id = 0)", id, storeID).First(&supplier)
 	if result.Error != nil {
 		return nil, result.Error
 	}

@@ -71,7 +71,7 @@ type SupplierCreateRequest struct {
 	Email   string `json:"email" binding:"required,email"`
 	Address string `json:"address"`
 	TaxCode string `json:"tax_code"`
-	StoreID uint   `json:"store_id" binding:"required"` // <-- Bổ sung thêm dòng này
+	StoreID uint   `json:"store_id"`
 }
 
 // SupplierUpdateRequest represents request to update a supplier

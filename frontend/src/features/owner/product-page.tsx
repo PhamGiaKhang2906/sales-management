@@ -14,6 +14,10 @@ import { Modal } from '../../components/layout/Modal';
 import { useProducts, useSuppliers } from '@/hooks/useOwner'; 
 
 export function ProductsPage() {
+  // 1. TÁCH STATE TÌM KIẾM ĐỂ KHÔNG TỰ ĐỘNG LỌC KHI ĐANG GÕ
+  const [searchText, setSearchText] = useState(''); // Lưu chữ đang gõ
+  const [appliedSearch, setAppliedSearch] = useState(''); // Lưu chữ khi đã bấm nút "Tìm kiếm" để gọi API
+
   const { 
     products, 
     categories, 
@@ -23,7 +27,7 @@ export function ProductsPage() {
     removeProduct, 
     createCategory, 
     refresh 
-  } = useProducts();
+  } = useProducts({ search: appliedSearch }); // Truyền từ khóa tìm kiếm vào để fetch API
 
   const { suppliers } = useSuppliers();
 
@@ -33,7 +37,6 @@ export function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   
   // State bộ lọc
-  const [searchText, setSearchText] = useState('');
   const [groupSearchText, setGroupSearchText] = useState('');
   const [stockFilter, setStockFilter] = useState('Tất cả');
   const [supplierFilter, setSupplierFilter] = useState<number | 'Tất cả'>('Tất cả'); 
@@ -52,6 +55,12 @@ export function ProductsPage() {
     supplier_id: 0, 
   });
 
+  // HÀM CHỐT TÌM KIẾM VÀ GỌI LẠI API
+  const handleSearchClick = async () => {
+    setAppliedSearch(searchText);
+    await refresh(); // Ép fetch lại API ngay lập tức
+  };
+
   // Lọc Danh mục an toàn
   const safeCategories = Array.isArray(categories) ? categories : [];
   const filteredGroups = safeCategories.filter((category: any) => {
@@ -62,8 +71,9 @@ export function ProductsPage() {
   // Lọc Sản phẩm
   const safeProducts = Array.isArray(products) ? products : [];
   const filteredProducts = safeProducts.filter((product: any) => {
-    const searchLower = searchText.toLowerCase();
-    const pCode = product.code || product.Code || '';
+    // Chỉ lọc theo appliedSearch (chữ đã chốt khi bấm nút)
+    const searchLower = appliedSearch.toLowerCase();
+    const pCode = product.code || product.Code || product.sku || product.SKU || '';
     const pName = product.name || product.Name || '';
     const matchesSearch = pCode.toLowerCase().includes(searchLower) || pName.toLowerCase().includes(searchLower);
 
@@ -99,7 +109,7 @@ export function ProductsPage() {
   const handleEdit = (product: any) => {
     setEditingProduct(product);
     setFormData({ 
-      code: product.code || product.Code || '',
+      code: product.code || product.Code || product.sku || product.SKU || '',
       name: product.name || product.Name || '',
       price: product.price || product.Price || 0,
       cost: product.cost || product.Cost || 0,
@@ -142,6 +152,7 @@ export function ProductsPage() {
         Stock: formData.stock,
         CategoryID: formData.category_id,
         SupplierID: formData.supplier_id,
+        Unit: formData.cost.toString(), // Truyền kèm phòng trường hợp Backend vẫn cần field này
       };
 
       if (editingProduct) {
@@ -190,12 +201,15 @@ export function ProductsPage() {
           </div>
 
           <div className="flex flex-1 flex-col gap-3 xl:max-w-4xl xl:flex-row xl:items-center xl:justify-end">
+            
+            {/* THANH TÌM KIẾM ĐÃ ĐƯỢC XÓA NÚT Ở TRÊN */}
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Theo mã, tên hàng"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()} // Tìm kiếm nhanh khi bấm Enter
+                placeholder="Theo mã, tên hàng..."
                 className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-12 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
               <button className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl p-2 text-slate-500 hover:bg-slate-100" type="button" aria-label="Bộ lọc nhanh">
@@ -207,7 +221,7 @@ export function ProductsPage() {
               <button
                 type="button"
                 onClick={() => setIsGroupModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-2xl border border-blue-300 bg-white px-4 py-3 font-semibold text-blue-600 shadow-sm transition hover:bg-blue-50"
+                className="inline-flex items-center gap-2 rounded-2xl border border-blue-300 bg-white px-4 py-3 font-semibold text-blue-600 shadow-sm transition hover:bg-blue-50 whitespace-nowrap"
               >
                 <Plus className="h-5 w-5" />
                 Tạo danh mục
@@ -215,7 +229,7 @@ export function ProductsPage() {
               <button
                 type="button"
                 onClick={handleOpenProductModal}
-                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 whitespace-nowrap"
               >
                 <Plus className="h-5 w-5" />
                 Tạo mặt hàng
@@ -227,11 +241,20 @@ export function ProductsPage() {
 
       <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-5 lg:p-5">
         <aside className="sticky top-4 h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          
+          {/* DI CHUYỂN NÚT TÌM KIẾM VÀO ĐÂY, CẠNH CHỮ BỘ LỌC */}
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2 font-semibold text-slate-900">
               <Layers3 className="h-5 w-5 text-blue-600" />
               Bộ lọc
             </div>
+            <button
+              type="button"
+              onClick={handleSearchClick}
+              className="rounded-lg bg-slate-800 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900"
+            >
+              Tìm kiếm
+            </button>
           </div>
 
           <div className="space-y-4">
@@ -315,6 +338,7 @@ export function ProductsPage() {
                 setSupplierFilter('Tất cả');
                 setSearchText('');
                 setGroupSearchText('');
+                setAppliedSearch(''); // Dọn dẹp cả API search
               }}
               className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
@@ -353,10 +377,9 @@ export function ProductsPage() {
                   <tr><td colSpan={7} className="text-center py-10 text-slate-400">Đang tải dữ liệu...</td></tr>
                 ) : filteredProducts.map((product: any) => {
                   const pId = product.id || product.ID;
-                  const pCode = product.code || product.Code;
+                  const pCode = product.code || product.Code || product.sku || product.SKU || '---';
                   const pName = product.name || product.Name;
-                  const catObj = product.Category || product.category || {};
-                  const catName = catObj.name || catObj.Name || '---';
+                  const catName = product.category_name || product.CategoryName || (product.Category && (product.Category.name || product.Category.Name)) || '---';
                   const pPrice = product.price || product.Price || 0;
                   const pCost = product.cost || product.Cost || 0;
                   const pStock = product.stock ?? product.Inventory?.current_stock ?? product.Inventory?.CurrentStock ?? 0;
@@ -439,7 +462,7 @@ export function ProductsPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">Nhà cung cấp (Tùy chọn)</label>
-                  <select value={formData.supplier_id} onChange={(e) => setFormData({ ...formData, supplier_id: Number(e.target.value) })} className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 bg-white mt-[26px]">
+                  <select value={formData.supplier_id} onChange={(e) => setFormData({ ...formData, supplier_id: Number(e.target.value) })} className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 bg-white">
                     <option value={0}>-- Không chọn --</option>
                     {(suppliers || []).map((sup: any) => (
                       <option key={sup.id || sup.ID} value={sup.id || sup.ID}>{sup.name || sup.Name}</option>

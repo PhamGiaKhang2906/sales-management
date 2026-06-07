@@ -66,11 +66,12 @@ type StoreTypesListResponse struct {
 
 // SupplierCreateRequest represents request to create a supplier
 type SupplierCreateRequest struct {
-	Name    string `json:"name" binding:"required,min=1,max=150"`
-	Phone   string `json:"phone" binding:"required,min=10,max=20"`
-	Email   string `json:"email" binding:"required,email,max=150"`
-	Address string `json:"address" binding:"max=255"`
-	TaxCode string `json:"tax_code" binding:"max=100"`
+	Name    string `json:"name" binding:"required"`
+	Phone   string `json:"phone"`
+	Email   string `json:"email" binding:"required,email"`
+	Address string `json:"address"`
+	TaxCode string `json:"tax_code"`
+	StoreID uint   `json:"store_id" binding:"required"` // <-- Bổ sung thêm dòng này
 }
 
 // SupplierUpdateRequest represents request to update a supplier

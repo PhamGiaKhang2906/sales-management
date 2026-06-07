@@ -14,10 +14,10 @@ func NewSupplierRepository(db *gorm.DB) *SupplierRepository {
 	return &SupplierRepository{DB: db}
 }
 
-// GetAllSuppliers retrieves all suppliers
-func (r *SupplierRepository) GetAllSuppliers() ([]models.Supplier, error) {
+// GetAllSuppliersByStore retrieves all suppliers by storeID
+func (r *SupplierRepository) GetAllSuppliersByStore(storeID uint) ([]models.Supplier, error) {
 	var suppliers []models.Supplier
-	result := r.DB.Find(&suppliers)
+	result := r.DB.Where("store_id = ?", storeID).Find(&suppliers)
 	return suppliers, result.Error
 }
 

@@ -23,7 +23,15 @@ func NewSupplierController(supplierService *services.SupplierService) *SupplierC
 
 // GetAllSuppliers retrieves all suppliers
 func (ctrl *SupplierController) GetAllSuppliers(c *gin.Context) {
-	response, err := ctrl.supplierService.GetAllSuppliers()
+	// Lấy store_id từ query parameter
+	storeIDStr := c.Query("store_id")
+	storeID, err := strconv.ParseUint(storeIDStr, 10, 32)
+	if err != nil || storeID == 0 {
+		utils.ErrorResponse(c, http.StatusBadRequest, "store_id không hợp lệ hoặc bị thiếu")
+		return
+	}
+
+	response, err := ctrl.supplierService.GetAllSuppliers(uint(storeID))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return

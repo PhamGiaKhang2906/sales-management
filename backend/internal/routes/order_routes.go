@@ -20,6 +20,7 @@ func OrderRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	orders := r.Group("/orders")
 	{
 		orders.GET("", orderCtrl.GetAllOrders)
+		//orders.GET("dashboard", orderCtrl.GetDashboard)
 		orders.GET("/:id", orderCtrl.GetOrder)
 		orders.POST("", orderCtrl.CreateOrder)
 		orders.PUT("/:id", orderCtrl.UpdateOrder)

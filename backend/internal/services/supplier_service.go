@@ -19,9 +19,9 @@ func NewSupplierService(supplierRepo *repository.SupplierRepository) *SupplierSe
 	}
 }
 
-// GetAllSuppliers retrieves all suppliers
-func (s *SupplierService) GetAllSuppliers() (*dto.SuppliersListResponse, error) {
-	suppliers, err := s.supplierRepo.GetAllSuppliers()
+// GetAllSuppliers retrieves all suppliers by store
+func (s *SupplierService) GetAllSuppliers(storeID uint) (*dto.SuppliersListResponse, error) {
+	suppliers, err := s.supplierRepo.GetAllSuppliersByStore(storeID)
 	if err != nil {
 		return nil, errors.New("Lỗi khi lấy danh sách nhà cung cấp")
 	}
@@ -55,6 +55,9 @@ func (s *SupplierService) CreateSupplier(req *dto.SupplierCreateRequest) (*dto.S
 	if req.Email == "" {
 		return nil, errors.New("Email không được để trống")
 	}
+	if req.StoreID == 0 {
+		return nil, errors.New("Cửa hàng không được để trống")
+	}
 
 	// Check if email already exists
 	exists, err := s.supplierRepo.CheckSupplierEmailExists(req.Email)
@@ -73,6 +76,7 @@ func (s *SupplierService) CreateSupplier(req *dto.SupplierCreateRequest) (*dto.S
 		Address: req.Address,
 		TaxCode: req.TaxCode,
 		Status:  "active",
+		StoreID: req.StoreID, // Thêm StoreID vào đây
 	}
 
 	if err := s.supplierRepo.CreateSupplier(supplier); err != nil {

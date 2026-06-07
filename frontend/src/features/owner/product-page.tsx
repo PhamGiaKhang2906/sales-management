@@ -55,6 +55,11 @@ export function ProductsPage() {
     supplier_id: 0, 
   });
 
+  // HÀM HỖ TRỢ LẤY TỒN KHO BAO QUÁT MỌI TRƯỜNG HỢP TỪ BACKEND
+  const getStock = (p: any) => {
+    return Number(p.stock ?? p.current_stock ?? p.CurrentStock ?? p.Inventory?.current_stock ?? p.Inventory?.CurrentStock ?? 0);
+  };
+
   // HÀM CHỐT TÌM KIẾM VÀ GỌI LẠI API
   const handleSearchClick = async () => {
     setAppliedSearch(searchText);
@@ -83,14 +88,15 @@ export function ProductsPage() {
     const supId = product.supplier_id || product.SupplierID || product.Supplier?.id || product.Supplier?.ID || 0;
     const matchesSupplier = supplierFilter === 'Tất cả' || supId === supplierFilter;
 
-    const currentStock = product.stock ?? product.Inventory?.current_stock ?? product.Inventory?.CurrentStock ?? 0;
+    // SỬ DỤNG HÀM GETSTOCK ĐỂ LẤY SỐ LƯỢNG CHÍNH XÁC
+    const currentStock = getStock(product);
     const matchesStock = stockFilter === 'Tất cả' || (stockFilter === 'Còn hàng' ? currentStock > 0 : currentStock === 0);
     
     return matchesSearch && matchesGroup && matchesStock && matchesSupplier;
   });
 
-  // Tính tổng tồn kho
-  const totalStock = filteredProducts.reduce((acc, p: any) => acc + (p.stock ?? p.Inventory?.current_stock ?? p.Inventory?.CurrentStock ?? 0), 0);
+  // Tính tổng tồn kho bằng hàm getStock
+  const totalStock = filteredProducts.reduce((acc, p: any) => acc + getStock(p), 0);
 
   const handleOpenProductModal = () => {
     setEditingProduct(null);
@@ -113,7 +119,7 @@ export function ProductsPage() {
       name: product.name || product.Name || '',
       price: product.price || product.Price || 0,
       cost: product.cost || product.Cost || 0,
-      stock: product.stock ?? product.Inventory?.current_stock ?? product.Inventory?.CurrentStock ?? 0,
+      stock: getStock(product), // CẬP NHẬT: Lấy tồn kho vào ô Sửa
       category_id: product.category_id || product.CategoryID || product.Category?.id || product.Category?.ID || 0,
       supplier_id: product.supplier_id || product.SupplierID || product.Supplier?.id || product.Supplier?.ID || 0,
     });
@@ -202,7 +208,6 @@ export function ProductsPage() {
 
           <div className="flex flex-1 flex-col gap-3 xl:max-w-4xl xl:flex-row xl:items-center xl:justify-end">
             
-            {/* THANH TÌM KIẾM ĐÃ ĐƯỢC XÓA NÚT Ở TRÊN */}
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
@@ -242,7 +247,6 @@ export function ProductsPage() {
       <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-5 lg:p-5">
         <aside className="sticky top-4 h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           
-          {/* DI CHUYỂN NÚT TÌM KIẾM VÀO ĐÂY, CẠNH CHỮ BỘ LỌC */}
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2 font-semibold text-slate-900">
               <Layers3 className="h-5 w-5 text-blue-600" />
@@ -382,7 +386,7 @@ export function ProductsPage() {
                   const catName = product.category_name || product.CategoryName || (product.Category && (product.Category.name || product.Category.Name)) || '---';
                   const pPrice = product.price || product.Price || 0;
                   const pCost = product.cost || product.Cost || 0;
-                  const pStock = product.stock ?? product.Inventory?.current_stock ?? product.Inventory?.CurrentStock ?? 0;
+                  const pStock = getStock(product); // CẬP NHẬT: Dùng hàm getStock
 
                   return (
                     <tr key={pId} className="border-b border-slate-100 hover:bg-slate-50">
@@ -462,7 +466,7 @@ export function ProductsPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">Nhà cung cấp (Tùy chọn)</label>
-                  <select value={formData.supplier_id} onChange={(e) => setFormData({ ...formData, supplier_id: Number(e.target.value) })} className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 bg-white">
+                  <select value={formData.supplier_id} onChange={(e) => setFormData({ ...formData, supplier_id: Number(e.target.value) })} className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 bg-white mt-[26px]">
                     <option value={0}>-- Không chọn --</option>
                     {(suppliers || []).map((sup: any) => (
                       <option key={sup.id || sup.ID} value={sup.id || sup.ID}>{sup.name || sup.Name}</option>

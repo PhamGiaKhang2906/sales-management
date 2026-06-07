@@ -8,9 +8,17 @@ type OrderItemRequest struct {
 	Quantity  int64 `json:"quantity" binding:"required,gt=0"`
 }
 
+// CustomerRequest represents the request to create a new customer during order creation.
+type CustomerRequest struct {
+	Name    string `json:"name" binding:"required"`
+	Phone   string `json:"phone" binding:"required"`
+	Address string `json:"address"`
+}
+
 // OrderCreateRequest represents request to create an order.
 type OrderCreateRequest struct {
 	CustomerID *uint              `json:"customer_id"`
+	Customer   *CustomerRequest   `json:"customer"`
 	Discount   float64            `json:"discount"`
 	Tax        float64            `json:"tax"`
 	Items      []OrderItemRequest `json:"items" binding:"required,min=1,dive"`
@@ -43,6 +51,8 @@ type OrderResponse struct {
 	ID           uint                `json:"id"`
 	CustomerID   *uint               `json:"customer_id"`
 	CustomerName string              `json:"customer_name"`
+	CustomerPhone string             `json:"customer_phone"`
+	CustomerAddress string           `json:"customer_address"`
 	UserID       uint                `json:"user_id"`
 	TotalAmount  float64             `json:"total_amount"`
 	Discount     float64             `json:"discount"`

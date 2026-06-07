@@ -227,9 +227,9 @@ export function InventoryPage() {
                   <th className="px-4 py-4 text-left font-semibold">Mã hàng</th>
                   <th className="px-4 py-4 text-left font-semibold">Tên hàng</th>
                   <th className="px-4 py-4 text-left font-semibold">Danh mục</th>
-                  <th className="px-4 py-4 text-left font-semibold text-right">Giá vốn</th>
-                  <th className="px-4 py-4 text-left font-semibold text-right">Giá bán</th>
-                  <th className="px-4 py-4 text-left font-semibold text-center">Tồn kho</th>
+                  <th className="px-4 py-4 text-left font-semibold">Giá vốn</th>
+                  <th className="px-4 py-4 text-left font-semibold">Giá bán</th>
+                  <th className="px-4 py-4 text-left font-semibold">Tồn kho</th>
                   <th className="px-4 py-4 text-center font-semibold">Thao tác</th>
                 </tr>
               </thead>

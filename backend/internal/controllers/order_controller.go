@@ -144,7 +144,7 @@ func (ctrl *OrderController) DeleteOrder(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Xóa đơn hàng thành công", nil)
 }
 
-// ReturnOrder changes an order from Đã_bán to Đã_trả.
+// ReturnOrder marks an order as returned.
 func (ctrl *OrderController) ReturnOrder(c *gin.Context) {
 	userID, ok := ctrl.getCurrentUserID(c)
 	if !ok {

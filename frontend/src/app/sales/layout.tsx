@@ -3,7 +3,7 @@ import { AppShell } from '@/components/layout/AppShell';
 
 export default function SalesLayout({ children }: { children: ReactNode }) {
   return (
-    <AppShell role="sales" title="Quan ly nhan vien ban hang">
+    <AppShell role="sales" title="TRANG NHÂN VIÊN BÁN HÀNG">
       {children}
     </AppShell>
   );

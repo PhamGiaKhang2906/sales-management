@@ -3,7 +3,7 @@ import { AppShell } from '@/components/layout/AppShell';
 
 export default function WarehouseLayout({ children }: { children: ReactNode }) {
   return (
-    <AppShell role="warehouse" title="Quan ly nhan vien kho">
+    <AppShell role="warehouse" title="TRANG NHÂN VIÊN KHO">
       {children}
     </AppShell>
   );

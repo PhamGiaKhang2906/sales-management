@@ -32,7 +32,6 @@ export function Sidebar({ role, currentPath, isOpen, onClose }: SidebarProps) {
   const warehouseMenuItems = [
     { id: 'warehouse-dashboard', href: '/warehouse', label: 'Tổng quan', icon: Home },
     { id: 'warehouse-inventory', href: '/warehouse/inventory', label: 'Tồn kho', icon: BarChart3 },
-    { id: 'warehouse-salary', href: '/warehouse/salary', label: 'Lương thưởng', icon: DollarSign },
   ];
 
   const adminMenuItems = [

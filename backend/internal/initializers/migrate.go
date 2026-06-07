@@ -23,6 +23,8 @@ func SyncDatabase() {
 		&models.Invoice{},
 		&models.Store{},
 		&models.StoreType{},
+		&models.PurchaseOrder{},
+		&models.PurchaseOrderItem{},
 	)
 
 	// Create default roles if they don't exist

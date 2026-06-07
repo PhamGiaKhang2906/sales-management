@@ -17,7 +17,8 @@ func NewSupplierRepository(db *gorm.DB) *SupplierRepository {
 // GetAllSuppliersByStore retrieves all suppliers by storeID
 func (r *SupplierRepository) GetAllSuppliersByStore(storeID uint) ([]models.Supplier, error) {
 	var suppliers []models.Supplier
-	result := r.DB.Where("store_id = ?", storeID).Find(&suppliers)
+	// include global suppliers (store_id = 0) and store-specific suppliers
+	result := r.DB.Where("store_id = ? OR store_id = 0", storeID).Find(&suppliers)
 	return suppliers, result.Error
 }
 

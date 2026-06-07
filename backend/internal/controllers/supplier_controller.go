@@ -23,15 +23,27 @@ func NewSupplierController(supplierService *services.SupplierService) *SupplierC
 
 // GetAllSuppliers retrieves all suppliers
 func (ctrl *SupplierController) GetAllSuppliers(c *gin.Context) {
-	// Lấy store_id từ query parameter
-	storeIDStr := c.Query("store_id")
-	storeID, err := strconv.ParseUint(storeIDStr, 10, 32)
-	if err != nil || storeID == 0 {
-		utils.ErrorResponse(c, http.StatusBadRequest, "store_id không hợp lệ hoặc bị thiếu")
+	// Lấy storeID từ context (được set bởi middleware)
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
 		return
 	}
 
-	response, err := ctrl.supplierService.GetAllSuppliers(uint(storeID))
+	var storeID uint
+	switch v := storeVal.(type) {
+	case uint:
+		storeID = v
+	case int:
+		storeID = uint(v)
+	case float64:
+		storeID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
+		return
+	}
+
+	response, err := ctrl.supplierService.GetAllSuppliers(storeID)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -47,6 +59,25 @@ func (ctrl *SupplierController) CreateSupplier(c *gin.Context) {
 	// Bind JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Dữ liệu không hợp lệ: "+err.Error())
+		return
+	}
+
+	// Get storeID from context and set into request
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
+		return
+	}
+
+	switch v := storeVal.(type) {
+	case uint:
+		req.StoreID = v
+	case int:
+		req.StoreID = uint(v)
+	case float64:
+		req.StoreID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
 		return
 	}
 

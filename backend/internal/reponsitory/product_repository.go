@@ -21,23 +21,20 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 	return &ProductRepository{DB: db}
 }
 
-// GetAllProductsByStore: Lọc sản phẩm theo storeID
 func (r *ProductRepository) GetAllProductsByStore(storeID uint) ([]models.Product, error) {
 	var products []models.Product
-	result := r.DB.Preload("Category").Preload("Supplier").Preload("Inventory").
-		Where("store_id = ?", storeID).
-		Order("id DESC").Find(&products)
+	result := r.DB.Preload("Category").Preload("Supplier").Joins("Inventory").
+		Where("products.store_id = ?", storeID).
+		Order("products.id DESC").Find(&products)
 	return products, result.Error
 }
 
 func (r *ProductRepository) SearchProducts(storeID uint, filters ProductFilters) ([]models.Product, error) {
 	query := r.DB.Model(&models.Product{}).
-		Where("products.store_id = ?", storeID). // Quan trọng: Lọc theo storeID
-		Distinct("products.id").
+		Where("products.store_id = ?", storeID).
 		Preload("Category").
 		Preload("Supplier").
-		Preload("Inventory").
-		Joins("LEFT JOIN inventories ON inventories.product_id = products.id")
+		Joins("Inventory")
 
 	if filters.CategoryID != nil {
 		query = query.Where("products.category_id = ?", *filters.CategoryID)
@@ -53,9 +50,9 @@ func (r *ProductRepository) SearchProducts(storeID uint, filters ProductFilters)
 
 	switch filters.StockStatus {
 	case "in":
-		query = query.Where("COALESCE(inventories.current_stock, 0) > 0")
+		query = query.Where("\"Inventory\".current_stock > 0")
 	case "out":
-		query = query.Where("COALESCE(inventories.current_stock, 0) = 0")
+		query = query.Where("COALESCE(\"Inventory\".current_stock, 0) = 0")
 	}
 
 	var products []models.Product

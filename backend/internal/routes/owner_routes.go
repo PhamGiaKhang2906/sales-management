@@ -60,4 +60,5 @@ func OwnerRoutes(r *gin.RouterGroup, db *gorm.DB) {
 
 	CustomerRoutes(owner, db)
 	ProductRoutes(owner, db)
+	OrderRoutes(owner, db)
 }

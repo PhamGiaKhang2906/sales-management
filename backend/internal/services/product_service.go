@@ -28,9 +28,9 @@ func NewProductService(productRepo *repository.ProductRepository, categoryRepo *
 	}
 }
 
-// GetAllProducts retrieves all products
-func (s *ProductService) GetAllProducts() (*dto.ProductsListResponse, error) {
-	products, err := s.productRepo.GetAllProducts()
+// GetAllProducts retrieves all products for a store
+func (s *ProductService) GetAllProducts(storeID uint) (*dto.ProductsListResponse, error) {
+	products, err := s.productRepo.GetAllProductsByStore(storeID)
 	if err != nil {
 		return nil, errors.New("Lỗi khi lấy danh sách sản phẩm")
 	}
@@ -47,7 +47,7 @@ func (s *ProductService) GetAllProducts() (*dto.ProductsListResponse, error) {
 }
 
 // SearchProducts retrieves products using search and filter criteria.
-func (s *ProductService) SearchProducts(search string, idParam string, categoryIDParam string, supplierIDParam string, stockStatus string) (*dto.ProductsListResponse, error) {
+func (s *ProductService) SearchProducts(storeID uint, search string, idParam string, categoryIDParam string, supplierIDParam string, stockStatus string) (*dto.ProductsListResponse, error) {
 	filters := repository.ProductFilters{
 		Search:      strings.TrimSpace(search),
 		StockStatus: strings.ToLower(strings.TrimSpace(stockStatus)),
@@ -80,7 +80,7 @@ func (s *ProductService) SearchProducts(search string, idParam string, categoryI
 		filters.SupplierID = &parsedSupplierID
 	}
 
-	products, err := s.productRepo.SearchProducts(filters)
+	products, err := s.productRepo.SearchProducts(storeID, filters)
 	if err != nil {
 		return nil, errors.New("Lỗi khi tìm kiếm sản phẩm")
 	}
@@ -96,9 +96,9 @@ func (s *ProductService) SearchProducts(search string, idParam string, categoryI
 	}, nil
 }
 
-// GetProductByID retrieves a product by ID
-func (s *ProductService) GetProductByID(id uint) (*dto.ProductResponse, error) {
-	product, err := s.productRepo.GetProductByID(id)
+// GetProductByID retrieves a product by ID scoped to store
+func (s *ProductService) GetProductByID(id uint, storeID uint) (*dto.ProductResponse, error) {
+	product, err := s.productRepo.GetProductByIDAndStore(id, storeID)
 	if err != nil {
 		return nil, errors.New("Sản phẩm không tồn tại")
 	}
@@ -108,7 +108,7 @@ func (s *ProductService) GetProductByID(id uint) (*dto.ProductResponse, error) {
 }
 
 // CreateProduct creates a new product
-func (s *ProductService) CreateProduct(req *dto.ProductCreateRequest) (*dto.ProductResponse, error) {
+func (s *ProductService) CreateProduct(storeID uint, req *dto.ProductCreateRequest) (*dto.ProductResponse, error) {
 	if req.CategoryID == 0 {
 		return nil, errors.New("Danh mục không được để trống")
 	}
@@ -125,14 +125,14 @@ func (s *ProductService) CreateProduct(req *dto.ProductCreateRequest) (*dto.Prod
 		return nil, errors.New("Giá sản phẩm phải lớn hơn 0")
 	}
 
-	if _, err := s.categoryRepo.GetCategoryByID(req.CategoryID); err != nil {
+	if _, err := s.categoryRepo.GetCategoryByIDAndStore(req.CategoryID, storeID); err != nil {
 		return nil, errors.New("Danh mục không tồn tại")
 	}
-	if _, err := s.supplierRepo.GetSupplierByID(req.SupplierID); err != nil {
+	if _, err := s.supplierRepo.GetSupplierByIDAndStore(req.SupplierID, storeID); err != nil {
 		return nil, errors.New("Nhà cung cấp không tồn tại")
 	}
 
-	exists, err := s.productRepo.CheckProductSKUExists(req.SKU)
+	exists, err := s.productRepo.CheckProductSKUExists(req.SKU, storeID)
 	if err != nil {
 		return nil, errors.New("Lỗi khi kiểm tra SKU sản phẩm")
 	}
@@ -154,6 +154,7 @@ func (s *ProductService) CreateProduct(req *dto.ProductCreateRequest) (*dto.Prod
 		Unit:       req.Unit,
 		Price:      req.Price,
 		Status:     status,
+		StoreID:    storeID,
 	}
 
 	err = s.productRepo.DB.Transaction(func(tx *gorm.DB) error {
@@ -177,7 +178,7 @@ func (s *ProductService) CreateProduct(req *dto.ProductCreateRequest) (*dto.Prod
 		return nil, errors.New("Lỗi khi tạo sản phẩm")
 	}
 
-	createdProduct, err := s.productRepo.GetProductByID(product.ID)
+	createdProduct, err := s.productRepo.GetProductByIDAndStore(product.ID, storeID)
 	if err != nil {
 		return nil, errors.New("Lỗi khi lấy thông tin sản phẩm vừa tạo")
 	}
@@ -187,7 +188,7 @@ func (s *ProductService) CreateProduct(req *dto.ProductCreateRequest) (*dto.Prod
 }
 
 // UpdateProduct updates an existing product
-func (s *ProductService) UpdateProduct(id uint, req *dto.ProductUpdateRequest) (*dto.ProductResponse, error) {
+func (s *ProductService) UpdateProduct(id uint, storeID uint, req *dto.ProductUpdateRequest) (*dto.ProductResponse, error) {
 	if req.CategoryID == 0 {
 		return nil, errors.New("Danh mục không được để trống")
 	}
@@ -203,20 +204,19 @@ func (s *ProductService) UpdateProduct(id uint, req *dto.ProductUpdateRequest) (
 	if req.Price <= 0 {
 		return nil, errors.New("Giá sản phẩm phải lớn hơn 0")
 	}
-
-	product, err := s.productRepo.GetProductByID(id)
+	product, err := s.productRepo.GetProductByIDAndStore(id, storeID)
 	if err != nil {
 		return nil, errors.New("Sản phẩm không tồn tại")
 	}
 
-	if _, err := s.categoryRepo.GetCategoryByID(req.CategoryID); err != nil {
+	if _, err := s.categoryRepo.GetCategoryByIDAndStore(req.CategoryID, storeID); err != nil {
 		return nil, errors.New("Danh mục không tồn tại")
 	}
-	if _, err := s.supplierRepo.GetSupplierByID(req.SupplierID); err != nil {
+	if _, err := s.supplierRepo.GetSupplierByIDAndStore(req.SupplierID, storeID); err != nil {
 		return nil, errors.New("Nhà cung cấp không tồn tại")
 	}
 
-	exists, err := s.productRepo.CheckProductSKUExistsExcept(req.SKU, id)
+	exists, err := s.productRepo.CheckProductSKUExistsExcept(req.SKU, id, storeID)
 	if err != nil {
 		return nil, errors.New("Lỗi khi kiểm tra SKU sản phẩm")
 	}
@@ -241,7 +241,7 @@ func (s *ProductService) UpdateProduct(id uint, req *dto.ProductUpdateRequest) (
 		return nil, errors.New("Lỗi khi cập nhật sản phẩm")
 	}
 
-	updatedProduct, err := s.productRepo.GetProductByID(id)
+	updatedProduct, err := s.productRepo.GetProductByIDAndStore(id, storeID)
 	if err != nil {
 		return nil, errors.New("Lỗi khi lấy thông tin sản phẩm vừa cập nhật")
 	}
@@ -251,12 +251,12 @@ func (s *ProductService) UpdateProduct(id uint, req *dto.ProductUpdateRequest) (
 }
 
 // DeleteProduct deletes a product by ID
-func (s *ProductService) DeleteProduct(id uint) error {
-	if _, err := s.productRepo.GetProductByID(id); err != nil {
+func (s *ProductService) DeleteProduct(id uint, storeID uint) error {
+	if _, err := s.productRepo.GetProductByIDAndStore(id, storeID); err != nil {
 		return errors.New("Sản phẩm không tồn tại")
 	}
 
-	if err := s.productRepo.DeleteProduct(id); err != nil {
+	if err := s.productRepo.DeleteProduct(id, storeID); err != nil {
 		return errors.New("Lỗi khi xóa sản phẩm")
 	}
 

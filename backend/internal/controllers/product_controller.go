@@ -28,9 +28,28 @@ func (ctrl *ProductController) GetAllProducts(c *gin.Context) {
 	categoryID := c.Query("category_id")
 	supplierID := c.Query("supplier_id")
 	stockStatus := c.Query("stock_status")
+	// Get storeID from context
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
+		return
+	}
+
+	var storeID uint
+	switch v := storeVal.(type) {
+	case uint:
+		storeID = v
+	case int:
+		storeID = uint(v)
+	case float64:
+		storeID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
+		return
+	}
 
 	if search == "" && idParam == "" && categoryID == "" && supplierID == "" && stockStatus == "" {
-		response, err := ctrl.productService.GetAllProducts()
+		response, err := ctrl.productService.GetAllProducts(storeID)
 		if err != nil {
 			utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 			return
@@ -40,7 +59,7 @@ func (ctrl *ProductController) GetAllProducts(c *gin.Context) {
 		return
 	}
 
-	response, err := ctrl.productService.SearchProducts(search, idParam, categoryID, supplierID, stockStatus)
+	response, err := ctrl.productService.SearchProducts(storeID, search, idParam, categoryID, supplierID, stockStatus)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -58,7 +77,27 @@ func (ctrl *ProductController) GetProduct(c *gin.Context) {
 		return
 	}
 
-	response, err := ctrl.productService.GetProductByID(uint(id))
+	// Get storeID from context
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
+		return
+	}
+
+	var storeID uint
+	switch v := storeVal.(type) {
+	case uint:
+		storeID = v
+	case int:
+		storeID = uint(v)
+	case float64:
+		storeID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
+		return
+	}
+
+	response, err := ctrl.productService.GetProductByID(uint(id), storeID)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusNotFound, err.Error())
 		return
@@ -75,7 +114,27 @@ func (ctrl *ProductController) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	response, err := ctrl.productService.CreateProduct(&req)
+	// Get storeID from context
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
+		return
+	}
+
+	var storeID uint
+	switch v := storeVal.(type) {
+	case uint:
+		storeID = v
+	case int:
+		storeID = uint(v)
+	case float64:
+		storeID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
+		return
+	}
+
+	response, err := ctrl.productService.CreateProduct(storeID, &req)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -99,7 +158,27 @@ func (ctrl *ProductController) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	response, err := ctrl.productService.UpdateProduct(uint(id), &req)
+	// Get storeID from context
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
+		return
+	}
+
+	var storeID uint
+	switch v := storeVal.(type) {
+	case uint:
+		storeID = v
+	case int:
+		storeID = uint(v)
+	case float64:
+		storeID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
+		return
+	}
+
+	response, err := ctrl.productService.UpdateProduct(uint(id), storeID, &req)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -117,7 +196,27 @@ func (ctrl *ProductController) DeleteProduct(c *gin.Context) {
 		return
 	}
 
-	if err := ctrl.productService.DeleteProduct(uint(id)); err != nil {
+	// Get storeID from context
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
+		return
+	}
+
+	var storeID uint
+	switch v := storeVal.(type) {
+	case uint:
+		storeID = v
+	case int:
+		storeID = uint(v)
+	case float64:
+		storeID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
+		return
+	}
+
+	if err := ctrl.productService.DeleteProduct(uint(id), storeID); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}

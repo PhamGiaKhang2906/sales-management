@@ -87,11 +87,16 @@ func (ctrl *PurchaseOrderController) Create(c *gin.Context) {
 	if !ok {
 		return
 	}
+	storeID, ok := ctrl.getStoreID(c)
+	if !ok {
+		return
+	}
 	var req dto.PurchaseOrderCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Dữ liệu không hợp lệ: "+err.Error())
 		return
 	}
+	req.StoreID = storeID
 	res, err := ctrl.poService.CreatePurchaseOrder(userID, &req)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())

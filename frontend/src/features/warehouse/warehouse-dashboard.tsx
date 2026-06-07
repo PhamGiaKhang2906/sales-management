@@ -13,23 +13,40 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useWarehouse } from '@/hooks/useWarehouse';
-import { useEmployees, useSuppliers, useProducts, useStore } from '@/hooks/useOwner';
 import { useState, useMemo, useEffect } from 'react';
 
 export default function WarehouseDashboardPage() {
-  const { dashboard, loading, createPurchaseOrder } = useWarehouse();
-  const { employees } = useEmployees();
-  const { suppliers } = useSuppliers();
-  const { products } = useProducts();
-  const { storeInfo } = useStore();
+  const { dashboard, loading, createPurchaseOrder, products, suppliers, profile: employee } = useWarehouse();
 
-  // Use the first employee from API if available; otherwise use an empty object
-  const employee = useMemo(() => (employees && employees.length > 0 ? employees[0] : {}) as any, [employees]);
+  const safeEmployee = useMemo(() => {
+    const e: any = employee || {};
+    const fullname = e.fullname || e.Fullname || e.User?.FullName || '';
+    const username = e.username || e.Username || e.User?.Username || '';
+    const cccd = e.cccd || e.CCCD || '';
+    const birthdayRaw = e.birthday || e.Birthday || null;
+    let birthday = '';
+    if (birthdayRaw) {
+      try {
+        birthday = new Date(birthdayRaw).toLocaleDateString('vi-VN');
+      } catch (err) {
+        birthday = String(birthdayRaw);
+      }
+    }
+    const phone = e.phone || e.Phone || e.User?.Phone || '';
+    const role_name = e.role_name || e.position || e.RoleName || '';
+    const work_shift = e.work_shift || e.shift || e.WorkShift || '';
+    const address = e.address || e.Address || '';
+    const salaryFactor = Number(e.salary_factor ?? e.SalaryFactor ?? e.salaryCoef ?? 0) || 0;
+    const salaryText = salaryFactor ? salaryFactor.toFixed(2) : '';
+    const status = e.status || e.Status || '';
+    const created_at = e.created_at || e.CreatedAt || '';
+
+    return { fullname, username, cccd, birthday, phone, role_name, work_shift, address, salaryText, status, created_at };
+  }, [employee]);
 
   // Create PO modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [poSupplierId, setPoSupplierId] = useState<number | null>(null);
-  const [poStoreId, setPoStoreId] = useState<number | null>(null);
   const [poItems, setPoItems] = useState<Array<{ product_id: number | null; quantity: number; import_price: number }>>([
     { product_id: null, quantity: 1, import_price: 0 }
   ]);
@@ -37,9 +54,6 @@ export default function WarehouseDashboardPage() {
   useEffect(() => {
     if (!poSupplierId && suppliers && suppliers.length > 0) setPoSupplierId(suppliers[0].id as number);
   }, [suppliers]);
-  useEffect(() => {
-    if (!poStoreId && storeInfo?.id) setPoStoreId(storeInfo.id as number);
-  }, [storeInfo]);
 
   const warehouseStats = {
     importOrdersToday: dashboard?.importOrdersToday ?? 0,
@@ -71,7 +85,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><User size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Họ và tên</p>
-                <p className="font-semibold text-gray-800">{employee.fullname}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.fullname || '—'}</p>
               </div>
             </div>
 
@@ -79,7 +93,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-gray-50 text-gray-600 rounded-lg"><User size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Tên đăng nhập</p>
-                <p className="font-semibold text-gray-800">{employee.username ?? ''}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.username || ''}</p>
               </div>
             </div>
 
@@ -87,7 +101,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><CreditCard size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Số CCCD</p>
-                <p className="font-semibold text-gray-800">{employee.cccd ?? ''}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.cccd || ''}</p>
               </div>
             </div>
 
@@ -95,7 +109,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-pink-50 text-pink-600 rounded-lg"><Calendar size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Ngày sinh</p>
-                <p className="font-semibold text-gray-800">{employee.birthday ?? ''}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.birthday || ''}</p>
               </div>
             </div>
 
@@ -103,7 +117,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><PackagePlus size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Số điện thoại</p>
-                <p className="font-semibold text-gray-800">{employee.phone ?? ''}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.phone || ''}</p>
               </div>
             </div>
 
@@ -111,7 +125,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Briefcase size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Chức vụ</p>
-                <p className="font-semibold text-gray-800">{employee.role_name || employee.position || ''}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.role_name || ''}</p>
               </div>
             </div>
 
@@ -119,7 +133,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-teal-50 text-teal-600 rounded-lg"><Clock size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Ca làm việc</p>
-                <p className="font-semibold text-gray-800">{employee.work_shift || employee.shift || ''}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.work_shift || ''}</p>
               </div>
             </div>
 
@@ -127,7 +141,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-amber-50 text-amber-600 rounded-lg"><FileText size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Địa chỉ</p>
-                <p className="font-semibold text-gray-800">{employee.address ?? ''}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.address || ''}</p>
               </div>
             </div>
 
@@ -135,7 +149,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><Coins size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Hệ số lương</p>
-                <p className="font-semibold text-gray-800">{employee.salary_factor ?? employee.salaryCoef ?? ''}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.salaryText || ''}</p>
               </div>
             </div>
 
@@ -143,7 +157,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-sky-50 text-sky-600 rounded-lg"><DollarSign size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Trạng thái</p>
-                <p className="font-semibold text-gray-800">{employee.status ?? ''}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.status || ''}</p>
               </div>
             </div>
 
@@ -151,7 +165,7 @@ export default function WarehouseDashboardPage() {
               <div className="p-2 bg-gray-50 text-gray-600 rounded-lg"><Calendar size={18} /></div>
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Ngày tạo tài khoản</p>
-                <p className="font-semibold text-gray-800">{employee.created_at ?? ''}</p>
+                <p className="font-semibold text-gray-800">{safeEmployee.created_at || ''}</p>
               </div>
             </div>
           </div>
@@ -223,11 +237,10 @@ export default function WarehouseDashboardPage() {
                 <button className="px-4 py-2 rounded bg-indigo-600 text-white" onClick={async () => {
                   // build payload (store_id is derived from current store if not shown)
                   if (!poSupplierId) return alert('Vui lòng chọn nhà cung cấp');
-                  const storeIdToUse = poStoreId ?? storeInfo?.id;
                   const itemsPayload = poItems.filter(i=>i.product_id).map(i=>({ product_id: i.product_id as number, quantity: i.quantity, import_price: i.import_price }));
                   if (itemsPayload.length===0) return alert('Vui lòng thêm ít nhất 1 sản phẩm');
                   try {
-                    await createPurchaseOrder({ supplier_id: poSupplierId, store_id: storeIdToUse as number, tax: 0, items: itemsPayload });
+                    await createPurchaseOrder({ supplier_id: poSupplierId, tax: 0, items: itemsPayload });
                     alert('Tạo phiếu nhập thành công');
                     setIsModalOpen(false);
                   } catch (err) {

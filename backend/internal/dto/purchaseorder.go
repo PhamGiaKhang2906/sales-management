@@ -10,7 +10,7 @@ type PurchaseOrderItemCreate struct {
 
 type PurchaseOrderCreateRequest struct {
 	SupplierID uint                      `json:"supplier_id" binding:"required,gt=0"`
-	StoreID    uint                      `json:"store_id" binding:"required,gt=0"`
+	StoreID    uint                      `json:"store_id"`
 	Items      []PurchaseOrderItemCreate `json:"items" binding:"required,dive,required"`
 	Tax        float64                   `json:"tax"`
 }

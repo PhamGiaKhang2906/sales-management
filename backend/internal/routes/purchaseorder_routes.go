@@ -19,9 +19,9 @@ func PurchaseOrderRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	po := r.Group("/purchase-orders")
 	{
 		po.GET("", poCtrl.GetAll)
-		po.GET(":id", poCtrl.Get)
+		po.GET("/:id", poCtrl.Get)
 		po.POST("", poCtrl.Create)
-		po.PATCH(":id/return", poCtrl.Return)
+		po.PATCH("/:id/return", poCtrl.Return)
 	}
 	// Note: this function expects the caller to mount it under an authorized group and a path prefix
 	_ = poCtrl

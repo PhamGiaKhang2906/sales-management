@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/PhamGiaKhang2906/sales-management-backend/internal/dto"
 	"github.com/PhamGiaKhang2906/sales-management-backend/internal/models"
@@ -20,8 +21,8 @@ func NewCategoryService(categoryRepo *repository.CategoryRepository) *CategorySe
 }
 
 // GetAllCategories retrieves all categories
-func (s *CategoryService) GetAllCategories() (*dto.CategoriesListResponse, error) {
-	categories, err := s.categoryRepo.GetAllCategories()
+func (s *CategoryService) GetAllCategories(storeID uint) (*dto.CategoriesListResponse, error) {
+	categories, err := s.categoryRepo.GetAllCategoriesByStore(storeID)
 	if err != nil {
 		return nil, errors.New("Lỗi khi lấy danh sách danh mục")
 	}
@@ -42,15 +43,17 @@ func (s *CategoryService) GetAllCategories() (*dto.CategoriesListResponse, error
 }
 
 // CreateCategory creates a new category
-func (s *CategoryService) CreateCategory(req *dto.CategoryCreateRequest) (*dto.CategoryResponse, error) {
+func (s *CategoryService) CreateCategory(storeID uint, req *dto.CategoryCreateRequest) (*dto.CategoryResponse, error) {
 	// Validate name not empty
 	if req.Name == "" {
 		return nil, errors.New("Tên danh mục không được để trống")
 	}
 
 	// Check if name already exists
-	exists, err := s.categoryRepo.CheckCategoryNameExists(req.Name)
+	exists, err := s.categoryRepo.CheckCategoryNameExists(req.Name, storeID)
 	if err != nil {
+		// print debug info to server console
+		fmt.Printf("[DEBUG] CreateCategory: CheckCategoryNameExists error: name=%s storeID=%d err=%v\n", req.Name, storeID, err)
 		return nil, errors.New("Lỗi khi kiểm tra tên danh mục")
 	}
 	if exists {
@@ -59,6 +62,7 @@ func (s *CategoryService) CreateCategory(req *dto.CategoryCreateRequest) (*dto.C
 
 	// Create category
 	category := &models.Category{
+		StoreID: storeID,
 		Name: req.Name,
 	}
 
@@ -75,20 +79,20 @@ func (s *CategoryService) CreateCategory(req *dto.CategoryCreateRequest) (*dto.C
 }
 
 // UpdateCategory updates an existing category
-func (s *CategoryService) UpdateCategory(id uint, req *dto.CategoryUpdateRequest) (*dto.CategoryResponse, error) {
+func (s *CategoryService) UpdateCategory(id uint, storeID uint, req *dto.CategoryUpdateRequest) (*dto.CategoryResponse, error) {
 	// Validate name not empty
 	if req.Name == "" {
 		return nil, errors.New("Tên danh mục không được để trống")
 	}
 
 	// Check if category exists
-	category, err := s.categoryRepo.GetCategoryByID(id)
+	category, err := s.categoryRepo.GetCategoryByIDAndStore(id, storeID)
 	if err != nil {
 		return nil, errors.New("Danh mục không tồn tại")
 	}
 
 	// Check if new name already exists (excluding current ID)
-	exists, err := s.categoryRepo.CheckCategoryNameExistsExcept(req.Name, id)
+	exists, err := s.categoryRepo.CheckCategoryNameExistsExcept(req.Name, id, storeID)
 	if err != nil {
 		return nil, errors.New("Lỗi khi kiểm tra tên danh mục")
 	}
@@ -98,6 +102,7 @@ func (s *CategoryService) UpdateCategory(id uint, req *dto.CategoryUpdateRequest
 
 	// Update category
 	category.Name = req.Name
+
 	if err := s.categoryRepo.UpdateCategory(category); err != nil {
 		return nil, errors.New("Lỗi khi cập nhật danh mục")
 	}
@@ -110,18 +115,31 @@ func (s *CategoryService) UpdateCategory(id uint, req *dto.CategoryUpdateRequest
 	return response, nil
 }
 
+// GetCategoryByID retrieves a category by ID and storeID
+func (s *CategoryService) GetCategoryByID(id uint, storeID uint) (*dto.CategoryResponse, error) {
+	category, err := s.categoryRepo.GetCategoryByIDAndStore(id, storeID)
+	if err != nil {
+		return nil, errors.New("Danh mục không tồn tại")
+	}
+
+	response := &dto.CategoryResponse{
+		ID:   category.ID,
+		Name: category.Name,
+	}
+
+	return response, nil
+}
+
 // DeleteCategory deletes a category by ID
-func (s *CategoryService) DeleteCategory(id uint) error {
-	// Check if category exists
-	_, err := s.categoryRepo.GetCategoryByID(id)
+func (s *CategoryService) DeleteCategory(id uint, storeID uint) error {
+	// Check if category exists before deleting
+	_, err := s.categoryRepo.GetCategoryByIDAndStore(id, storeID)
 	if err != nil {
 		return errors.New("Danh mục không tồn tại")
 	}
 
-	// Delete category
-	if err := s.categoryRepo.DeleteCategory(id); err != nil {
+	if err := s.categoryRepo.DeleteCategory(id, storeID); err != nil {
 		return errors.New("Lỗi khi xóa danh mục")
 	}
-
 	return nil
 }

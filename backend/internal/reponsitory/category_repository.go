@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/PhamGiaKhang2906/sales-management-backend/internal/models"
 	"gorm.io/gorm"
 )
@@ -9,66 +11,51 @@ type CategoryRepository struct {
 	DB *gorm.DB
 }
 
-// NewCategoryRepository creates a new category repository
 func NewCategoryRepository(db *gorm.DB) *CategoryRepository {
 	return &CategoryRepository{DB: db}
 }
 
-// GetAllCategories retrieves all categories
-func (r *CategoryRepository) GetAllCategories() ([]models.Category, error) {
+// GetAllCategoriesByStore: Chỉ lấy danh mục thuộc cửa hàng đó
+func (r *CategoryRepository) GetAllCategoriesByStore(storeID uint) ([]models.Category, error) {
 	var categories []models.Category
-	result := r.DB.Find(&categories)
+	// Include global categories (store_id = 0) as fallback/shared categories
+	result := r.DB.Where("store_id = ? OR store_id = 0", storeID).Find(&categories)
 	return categories, result.Error
 }
 
-// GetCategoryByID retrieves a category by ID
-func (r *CategoryRepository) GetCategoryByID(id uint) (*models.Category, error) {
+func (r *CategoryRepository) GetCategoryByIDAndStore(id uint, storeID uint) (*models.Category, error) {
 	var category models.Category
-	result := r.DB.First(&category, id)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &category, nil
+	result := r.DB.Where("id = ? AND store_id = ?", id, storeID).First(&category)
+	return &category, result.Error
 }
 
-// CheckCategoryNameExists checks if category name already exists
-func (r *CategoryRepository) CheckCategoryNameExists(name string) (bool, error) {
+func (r *CategoryRepository) CheckCategoryNameExists(name string, storeID uint) (bool, error) {
 	var count int64
-	result := r.DB.Model(&models.Category{}).Where("name = ?", name).Count(&count)
+	// Check within the store and global categories
+	result := r.DB.Model(&models.Category{}).Where("name = ? AND (store_id = ? OR store_id = 0)", name, storeID).Count(&count)
 	if result.Error != nil {
-		return false, result.Error
+		// log the SQL error for debugging
+		// use Printf to ensure it appears in server stdout
+		fmt.Printf("[DEBUG] CheckCategoryNameExists error: name=%s storeID=%d err=%v\n", name, storeID, result.Error)
 	}
-	return count > 0, nil
+	return count > 0, result.Error
 }
 
-// CheckCategoryNameExistsExcept checks if name exists excluding a specific ID
-func (r *CategoryRepository) CheckCategoryNameExistsExcept(name string, excludeID uint) (bool, error) {
+func (r *CategoryRepository) CheckCategoryNameExistsExcept(name string, id uint, storeID uint) (bool, error) {
 	var count int64
-	result := r.DB.Model(&models.Category{}).Where("name = ? AND id != ?", name, excludeID).Count(&count)
-	if result.Error != nil {
-		return false, result.Error
-	}
-	return count > 0, nil
+	// Exclude the given ID and check within the store and global categories
+	result := r.DB.Model(&models.Category{}).Where("name = ? AND id <> ? AND (store_id = ? OR store_id = 0)", name, id, storeID).Count(&count)
+	return count > 0, result.Error
 }
 
-// CreateCategory creates a new category
 func (r *CategoryRepository) CreateCategory(category *models.Category) error {
 	return r.DB.Create(category).Error
 }
 
-// UpdateCategory updates an existing category
 func (r *CategoryRepository) UpdateCategory(category *models.Category) error {
 	return r.DB.Model(category).Update("name", category.Name).Error
 }
 
-// DeleteCategory deletes a category by ID
-func (r *CategoryRepository) DeleteCategory(id uint) error {
-	return r.DB.Delete(&models.Category{}, id).Error
-}
-
-// GetCategoryCount returns the total count of categories
-func (r *CategoryRepository) GetCategoryCount() (int64, error) {
-	var count int64
-	result := r.DB.Model(&models.Category{}).Count(&count)
-	return count, result.Error
+func (r *CategoryRepository) DeleteCategory(id uint, storeID uint) error {
+	return r.DB.Where("id = ? AND store_id = ?", id, storeID).Delete(&models.Category{}).Error
 }

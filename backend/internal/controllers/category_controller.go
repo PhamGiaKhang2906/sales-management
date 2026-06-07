@@ -23,7 +23,26 @@ func NewCategoryController(categoryService *services.CategoryService) *CategoryC
 
 // GetAllCategories retrieves all categories
 func (ctrl *CategoryController) GetAllCategories(c *gin.Context) {
-	response, err := ctrl.categoryService.GetAllCategories()
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
+		return
+	}
+
+	var storeID uint
+	switch v := storeVal.(type) {
+	case uint:
+		storeID = v
+	case int:
+		storeID = uint(v)
+	case float64:
+		storeID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
+		return
+	}
+
+	response, err := ctrl.categoryService.GetAllCategories(storeID)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -42,8 +61,28 @@ func (ctrl *CategoryController) CreateCategory(c *gin.Context) {
 		return
 	}
 
+	// Get storeID from context
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
+		return
+	}
+
+	var storeID uint
+	switch v := storeVal.(type) {
+	case uint:
+		storeID = v
+	case int:
+		storeID = uint(v)
+	case float64:
+		storeID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
+		return
+	}
+
 	// Call service
-	response, err := ctrl.categoryService.CreateCategory(&req)
+	response, err := ctrl.categoryService.CreateCategory(storeID, &req)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -70,8 +109,28 @@ func (ctrl *CategoryController) UpdateCategory(c *gin.Context) {
 		return
 	}
 
+	// Get storeID from context
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
+		return
+	}
+
+	var storeID uint
+	switch v := storeVal.(type) {
+	case uint:
+		storeID = v
+	case int:
+		storeID = uint(v)
+	case float64:
+		storeID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
+		return
+	}
+
 	// Call service
-	response, err := ctrl.categoryService.UpdateCategory(uint(id), &req)
+	response, err := ctrl.categoryService.UpdateCategory(uint(id), storeID, &req)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -90,8 +149,28 @@ func (ctrl *CategoryController) DeleteCategory(c *gin.Context) {
 		return
 	}
 
+	// Get storeID from context
+	storeVal, exists := c.Get("storeID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Không có thông tin cửa hàng")
+		return
+	}
+
+	var storeID uint
+	switch v := storeVal.(type) {
+	case uint:
+		storeID = v
+	case int:
+		storeID = uint(v)
+	case float64:
+		storeID = uint(v)
+	default:
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Thông tin cửa hàng không hợp lệ")
+		return
+	}
+
 	// Call service
-	err = ctrl.categoryService.DeleteCategory(uint(id))
+	err = ctrl.categoryService.DeleteCategory(uint(id), storeID)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return

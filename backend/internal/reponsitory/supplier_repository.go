@@ -31,6 +31,16 @@ func (r *SupplierRepository) GetSupplierByID(id uint) (*models.Supplier, error) 
 	return &supplier, nil
 }
 
+// GetSupplierByIDAndStore retrieves a supplier by ID and storeID
+func (r *SupplierRepository) GetSupplierByIDAndStore(id uint, storeID uint) (*models.Supplier, error) {
+	var supplier models.Supplier
+	result := r.DB.Where("id = ? AND store_id = ?", id, storeID).First(&supplier)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &supplier, nil
+}
+
 // CheckSupplierEmailExists checks if email already exists
 func (r *SupplierRepository) CheckSupplierEmailExists(email string) (bool, error) {
 	var count int64

@@ -17,8 +17,8 @@ export interface SupplierCreatePayload { name: string; phone: string; email: str
 export interface SupplierUpdatePayload { name?: string; phone?: string; email?: string; address?: string; code?: string; contact?: string; }
 
 export interface Product { id?: number; code: string; name: string; price: number; cost: number; stock: number; category_id?: number; group?: string; supplier?: string; image?: string; Inventory?: any; Category?: any; Supplier?: any; }
-export interface ProductCreatePayload { code: string; name: string; price: number; cost: number; stock: number; category_id?: number; group?: string; supplier_id?: number; image?: string; }
-export interface ProductUpdatePayload { code?: string; name?: string; price?: number; cost?: number; stock?: number; category_id?: number; group?: string; supplier_id?: number; image?: string; }
+export interface ProductCreatePayload { code: string; name: string; price: number; cost: number; stock: number; current_stock?: number; min_stock?: number; category_id?: number; group?: string; supplier_id?: number; image?: string; }
+export interface ProductUpdatePayload { code?: string; name?: string; price?: number; cost?: number; stock?: number; current_stock?: number; min_stock?: number; category_id?: number; group?: string; supplier_id?: number; image?: string; }
 
 export interface Category { id?: number; name: string; Name?: string; }
 export interface StoreInfo { id?: number; name: string; taxCode?: string; tax_code?: string; address: string; phone: string; email?: string; website?: string; ownerName?: string; owner_name?: string; businessType?: string; business_type?: string; openingHours?: string; opening_hours?: string; }
@@ -62,9 +62,23 @@ export const ownerService = {
   },
   suppliers: {
     getAll: async () => {
-      const res = await api.get('/owner/suppliers', { params: withCacheBuster() });
-      const obj = extractObject(res);
-      return obj?.suppliers || obj?.Suppliers || [];
+      try {
+        const res = await api.get('/owner/suppliers', { params: withCacheBuster() });
+        const obj = extractObject(res);
+        return obj?.suppliers || obj?.Suppliers || [];
+      } catch (err: any) {
+        if (err?.response?.status === 403) {
+          try {
+            const res2 = await api.get('/warehouse/suppliers', { params: withCacheBuster() });
+            const obj2 = extractObject(res2);
+            return obj2?.suppliers || obj2?.Suppliers || obj2 || [];
+          } catch (err2) {
+            console.warn('Fallback to /warehouse/suppliers failed', err2);
+            return [];
+          }
+        }
+        throw err;
+      }
     },
     create: async (data: SupplierCreatePayload) => extractObject(await api.post('/owner/suppliers', data)),
     update: async (id: number, data: SupplierUpdatePayload) => extractObject(await api.put(`/owner/suppliers/${id}`, data)),
@@ -72,9 +86,33 @@ export const ownerService = {
   },
   products: {
     getAll: async (params?: any) => {
-      const res = await api.get('/owner/products', { params: withCacheBuster(params) });
-      const obj = extractObject(res);
-      return obj?.products || obj?.Products || [];
+      try {
+        const res = await api.get('/owner/products', { params: withCacheBuster(params) });
+        const obj = extractObject(res);
+        return obj?.products || obj?.Products || [];
+      } catch (err: any) {
+        // If user is not owner, try the sales product endpoint as a fallback
+        if (err?.response?.status === 403) {
+          // try warehouse products first
+          try {
+            const resW = await api.get('/warehouse/products', { params: withCacheBuster(params) });
+            const objW = extractObject(resW);
+            return objW?.products || objW?.Products || objW || [];
+          } catch (errW) {
+            console.warn('Fallback to /warehouse/products failed', errW);
+          }
+          // then try sales products
+          try {
+            const res2 = await api.get('/sales/products', { params: withCacheBuster(params) });
+            const obj2 = extractObject(res2);
+            return obj2?.products || obj2?.Products || obj2 || [];
+          } catch (err2) {
+            console.warn('Fallback to /sales/products failed', err2);
+            return [];
+          }
+        }
+        throw err;
+      }
     },
     getCategories: async () => {
       const res = await api.get('/owner/categories', { params: withCacheBuster() });
@@ -180,6 +218,16 @@ export function useProducts(filters?: any) {
       price: Number(data.price ?? data.Price ?? 0),
       status: data.status ?? data.Status ?? 'active',
     };
+
+    // map various stock field names to backend `current_stock`
+    const currentStock = data.current_stock ?? data.CurrentStock ?? data.stock ?? data.Stock ?? data.Inventory?.current_stock ?? data.Inventory?.CurrentStock;
+    if (typeof currentStock !== 'undefined') {
+      payload.current_stock = Number(currentStock ?? 0);
+    }
+    const minStock = data.min_stock ?? data.MinStock ?? data.minStock ?? data.MinStock;
+    if (typeof minStock !== 'undefined') {
+      payload.min_stock = Number(minStock ?? 0);
+    }
 
     const res = await ownerService.products.create(payload);
     await fetchData();

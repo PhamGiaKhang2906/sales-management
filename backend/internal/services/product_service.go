@@ -157,6 +157,16 @@ func (s *ProductService) CreateProduct(storeID uint, req *dto.ProductCreateReque
 		StoreID:    storeID,
 	}
 
+	// Determine initial inventory values if provided
+	var initCurrentStock int64 = 0
+	var initMinStock int64 = 0
+	if req.CurrentStock != nil {
+		initCurrentStock = *req.CurrentStock
+	}
+	if req.MinStock != nil {
+		initMinStock = *req.MinStock
+	}
+
 	err = s.productRepo.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(product).Error; err != nil {
 			return err
@@ -164,8 +174,8 @@ func (s *ProductService) CreateProduct(storeID uint, req *dto.ProductCreateReque
 
 		inventory := &models.Inventory{
 			ProductID:    product.ID,
-			CurrentStock: 0,
-			MinStock:     0,
+			CurrentStock: initCurrentStock,
+			MinStock:     initMinStock,
 		}
 
 		if err := tx.Create(inventory).Error; err != nil {
@@ -244,6 +254,20 @@ func (s *ProductService) UpdateProduct(id uint, storeID uint, req *dto.ProductUp
 	updatedProduct, err := s.productRepo.GetProductByIDAndStore(id, storeID)
 	if err != nil {
 		return nil, errors.New("Lỗi khi lấy thông tin sản phẩm vừa cập nhật")
+	}
+
+	// Update inventory if frontend provided values
+	if req.CurrentStock != nil || req.MinStock != nil {
+		inv, err := s.inventoryRepo.GetInventoryByProductID(product.ID)
+		if err == nil && inv != nil {
+			if req.CurrentStock != nil {
+				inv.CurrentStock = *req.CurrentStock
+			}
+			if req.MinStock != nil {
+				inv.MinStock = *req.MinStock
+			}
+			_ = s.inventoryRepo.UpdateInventory(inv)
+		}
 	}
 
 	response := s.toProductResponse(updatedProduct)

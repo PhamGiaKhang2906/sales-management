@@ -85,3 +85,8 @@ func (r *CustomerRepository) UpdateCustomer(customer *models.Customer) error {
 func (r *CustomerRepository) DeleteCustomer(id uint) error {
 	return r.DB.Delete(&models.Customer{}, id).Error
 }
+
+// CreateCustomerWithDB creates a new customer using the provided DB handle (hỗ trợ Transaction).
+func (r *CustomerRepository) CreateCustomerWithDB(db *gorm.DB, customer *models.Customer) error {
+	return db.Create(customer).Error
+}

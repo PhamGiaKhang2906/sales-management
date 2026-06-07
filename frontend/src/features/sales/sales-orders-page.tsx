@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import useSales from '@/hooks/useSales';
 import { Search, Trash2, User, Phone, MapPin, Mail, Loader2 } from 'lucide-react';
 
 // Khai báo kiểu dữ liệu cho Sản phẩm trả về từ API
@@ -22,6 +23,7 @@ interface OrderItem {
 
 export function SalesOrdersPage() {
   const [isClient, setIsClient] = useState(false); // Xử lý lỗi hydration Next.js
+  const { orders, ordersLoading, refreshOrders, searchProducts, createOrder } = useSales();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -31,6 +33,10 @@ export function SalesOrdersPage() {
   // State giỏ hàng (Khởi tạo trống, sẽ load từ localStorage sau khi component mount)
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [discount, setDiscount] = useState(0);
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
 
   // 1. CHẠY KHI MỞ TRANG: Load giỏ hàng lưu tạm từ LocalStorage
   useEffect(() => {
@@ -75,24 +81,8 @@ export function SalesOrdersPage() {
     setShowDropdown(true);
 
     try {
-      const response = await fetch(`http://localhost:8080/api/owner/products?search=${encodeURIComponent(searchQuery)}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      const resData = await response.json();
-      
-      // Xử lý dữ liệu trả về theo đúng cấu trúc DTO ProductsListResponse
-      if (resData && resData.data && resData.data.products) {
-        setSearchResults(resData.data.products);
-      } else if (Array.isArray(resData.data)) {
-        setSearchResults(resData.data);
-      } else {
-        setSearchResults([]);
-      }
+      const results = await searchProducts(searchQuery);
+      setSearchResults(Array.isArray(results) ? results : (results.products || results.Products || []));
     } catch (error) {
       console.error("Lỗi khi tìm kiếm sản phẩm:", error);
       setSearchResults([]);
@@ -327,15 +317,17 @@ export function SalesOrdersPage() {
             <div className="flex flex-col gap-5">
               <div className="relative">
                 <User className="absolute top-3 left-3 text-gray-400" size={20} />
-                <input type="text" placeholder="Tên khách hàng" className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500" />
+                <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} type="text" placeholder="Tên khách hàng" className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500" />
               </div>
               <div className="relative">
                 <Phone className="absolute top-3 left-3 text-gray-400" size={20} />
-                <input type="tel" placeholder="Số điện thoại" className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500" />
+                <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} type="tel" placeholder="Số điện thoại" className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500" />
               </div>
               <div className="relative">
                 <Mail className="absolute top-3 left-3 text-gray-400" size={20} />
                 <input
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
                   type="email"
                   placeholder="Email"
                   className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500"
@@ -343,7 +335,7 @@ export function SalesOrdersPage() {
               </div>
               <div className="relative">
                 <MapPin className="absolute top-3 left-3 text-gray-400" size={20} />
-                <textarea placeholder="Địa chỉ giao hàng (nếu có)" rows={3} className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500 resize-none" />
+                <textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="Địa chỉ giao hàng (nếu có)" rows={3} className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:border-blue-500 resize-none" />
               </div>
             </div>
           </div>
@@ -351,10 +343,31 @@ export function SalesOrdersPage() {
           <div className="h-[10%] flex items-end">
             <button 
                className="w-full h-full bg-green-600 hover:bg-green-700 text-white text-xl font-bold rounded-lg shadow-md transition-colors"
-               onClick={() => {
-                 alert("Bắt đầu xử lý gọi API lưu order...");
-                 // Sau khi lưu API thành công, bạn gọi lệnh này để xoá cache: 
-                 // localStorage.removeItem('pos_cart_temp'); setOrderItems([]);
+               onClick={async () => {
+                 if (orderItems.length === 0) { alert('Không có sản phẩm trong đơn'); return; }
+                 try {
+                   const payload: any = {
+                     discount: Number(discount) || 0,
+                     tax: 0,
+                     items: orderItems.map(it => ({ product_id: it.id, quantity: it.quantity }))
+                   };
+                   if (customerPhone.trim()) {
+                     payload.customer = {
+                       name: customerName || 'Khách hàng',
+                       phone: customerPhone,
+                       address: customerAddress || '',
+                       email: customerEmail || '',
+                     };
+                   }
+                   await createOrder(payload);
+                   localStorage.removeItem('pos_cart_temp');
+                   setOrderItems([]);
+                   alert('Tạo đơn hàng thành công');
+                   await refreshOrders();
+                 } catch (err: any) {
+                   const msg = err?.response?.data?.message || err?.message || 'Lỗi khi tạo đơn hàng';
+                   alert('Lỗi: ' + msg);
+                 }
                }}
             >
               TẠO ĐƠN HÀNG

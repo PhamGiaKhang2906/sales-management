@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CornerDownLeft, User, Phone, MapPin } from 'lucide-react';
 import { Modal } from '../../components/layout/Modal';
+import useSales from '@/hooks/useSales';
 
 // Khai báo kiểu dữ liệu
 interface ReturnItem {
@@ -19,6 +20,7 @@ interface OrderToReturn {
   customer_name: string;
   customer_phone: string;
   customer_address: string;
+  customer_id?: number | null;
   total_amount: number;
   status: 'purchased' | 'returned'; // Đã đổi thành Đã mua / Đã trả
   created_at: string;
@@ -26,56 +28,58 @@ interface OrderToReturn {
 }
 
 export function ReturnOrdersPage() {
-  // Dữ liệu mẫu khởi tạo
-  const [orders, setOrders] = useState<OrderToReturn[]>([
-    {
-      id: 1,
-      order_code: 'DH-10023',
-      customer_name: 'Nguyễn Đình Hoàng',
-      customer_phone: '0935123456',
-      customer_address: '45 Lê Lợi, Phú Hội, Thành phố Huế',
-      total_amount: 350000,
-      status: 'purchased',
-      created_at: '2026-06-06 14:25:00',
-      items: [
-        { id: 101, product_name: 'Cà phê muối hảo hạng', sku: 'CFM-01', quantity: 2, price: 35000 },
-        { id: 102, product_name: 'Trà thạch đào size L', sku: 'TTD-L', quantity: 3, price: 45000 },
-        { id: 103, product_name: 'Bánh sừng bò trứng muối', sku: 'BSB-TM', quantity: 3, price: 48000 }
-      ]
-    },
-    {
-      id: 2,
-      order_code: 'DH-10024',
-      customer_name: 'Trần Thị Thu Thảo',
-      customer_phone: '0905777888',
-      customer_address: 'Kiệt 112 Hùng Vương, Thành phố Huế',
-      total_amount: 120000,
-      status: 'returned',
-      created_at: '2026-06-05 10:12:00',
-      items: [
-        { id: 104, product_name: 'Bạc xỉu cốt dừa', sku: 'BXD-01', quantity: 2, price: 40000 },
-        { id: 105, product_name: 'Trà xanh Nhật Bản', sku: 'TXN-01', quantity: 1, price: 40000 }
-      ]
-    }
-  ]);
+  const { orders: fetchedOrders, ordersLoading, refreshOrders, returnOrder, customers } = useSales();
+  const [orders, setOrders] = useState<OrderToReturn[]>([]);
+
+  useEffect(() => {
+    // map fetchedOrders to OrderToReturn shape
+    if (!fetchedOrders) return;
+    const mapped = (Array.isArray(fetchedOrders) ? fetchedOrders : (fetchedOrders.orders || fetchedOrders)).map((o: any) => ({
+      id: o.id,
+      order_code: o.id ? `DH-${o.id}` : '',
+      customer_id: o.customer_id || o.customer?.id || null,
+      customer_name: o.customer_name || o.customer?.name || '',
+      customer_phone: o.customer_phone || o.customer?.phone || '',
+      customer_address: o.customer_address || o.customer?.address || o.customer?.Address || '',
+      total_amount: o.final_amount || o.FinalAmount || o.total_amount || o.TotalAmount || 0,
+      status: o.status === 'Đã_trả' ? 'returned' : 'purchased',
+      created_at: o.created_at || o.CreatedAt || o.createdAt || '',
+      items: (o.items || o.order_items || o.OrderItems || []).map((it: any) => ({
+        id: it.id,
+        product_name: it.product_name || it.product?.name || it.Product?.Name || '',
+        sku: it.sku || it.product?.sku || it.Product?.SKU || '',
+        quantity: it.quantity || it.Quantity || 0,
+        price: it.unit_price || it.UnitPrice || it.price || 0,
+      }))
+    }));
+    setOrders(mapped);
+  }, [fetchedOrders]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderToReturn | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterCustomerId, setFilterCustomerId] = useState<number | null>(null);
 
   const handleOpenReturn = (order: OrderToReturn) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
   };
 
-  const handleConfirmReturn = () => {
-    alert(`Đã thực hiện trả hàng cho đơn: ${selectedOrder?.order_code}`);
-    setIsModalOpen(false);
+  const handleConfirmReturn = async () => {
+    if (!selectedOrder) return;
+    try {
+      await returnOrder(selectedOrder.id);
+      alert(`Đã thực hiện trả hàng cho đơn: ${selectedOrder.order_code}`);
+      setIsModalOpen(false);
+      await refreshOrders();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Lỗi khi trả hàng';
+      alert('Lỗi: ' + msg);
+    }
   };
 
-  const filteredOrders = filterStatus === 'all' 
-    ? orders 
-    : orders.filter(order => order.status === filterStatus);
+  const filteredOrders = (filterStatus === 'all' ? orders : orders.filter(order => order.status === filterStatus))
+    .filter(order => (filterCustomerId ? order.customer_id === filterCustomerId || order.customer_phone === (customers.find(c=>c.id===filterCustomerId)?.phone) : true));
 
   // Cấu hình nhãn và CSS cho các danh mục bộ lọc
   const statusConfig = {
@@ -94,7 +98,8 @@ export function ReturnOrdersPage() {
         </div>
         
         {/* Bộ lọc 3 mục: Tất cả, Đã mua, Đã trả */}
-        <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200/60 shadow-inner">
+        <div className="flex items-center gap-4">
+          <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200/60 shadow-inner">
           {(['all', 'purchased', 'returned'] as const).map((status) => (
             <button
               key={status}
@@ -108,6 +113,17 @@ export function ReturnOrdersPage() {
               {statusConfig[status].text}
             </button>
           ))}
+          </div>
+
+          {/* Customer filter */}
+          <div className="bg-white border rounded-lg px-3 py-1">
+            <select value={filterCustomerId ?? ''} onChange={(e) => setFilterCustomerId(e.target.value ? Number(e.target.value) : null)} className="bg-transparent outline-none text-sm">
+              <option value="">Tất cả khách hàng</option>
+              {customers && customers.map((c: any) => (
+                <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

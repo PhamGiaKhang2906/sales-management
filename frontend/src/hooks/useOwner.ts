@@ -9,8 +9,8 @@ export interface CustomerCreatePayload { name: string; code?: string; phone: str
 export interface CustomerUpdatePayload { name?: string; code?: string; phone?: string; email?: string; address?: string; }
 
 export interface Employee { id: number; user_id: number; username: string; fullname: string; phone: string; cccd?: string; address?: string; birthday?: string | null; salary_factor: number; work_shift: string; status: string; created_at: string; role_id: number; User?: any; }
-export interface EmployeeCreatePayload { fullname: string; username: string; password?: string; phone: string; cccd?: string; address?: string; birthday?: string | null; salary_factor: number; work_shift: string; role_id: number; }
-export interface EmployeeUpdatePayload { fullname?: string; phone?: string; cccd?: string; address?: string; birthday?: string | null; salary_factor?: number; work_shift?: string; role_id?: number; }
+export interface EmployeeCreatePayload { fullname: string; username: string; password?: string; phone: string; cccd?: string; address?: string; birthday?: string | null; salary_factor: number; work_shift: string; role_id?: number; role_name?: string; }
+export interface EmployeeUpdatePayload { fullname?: string; phone?: string; cccd?: string; address?: string; birthday?: string | null; salary_factor?: number; work_shift?: string; role_id?: number; role_name?: string; }
 
 export interface Supplier { id?: number; name: string; phone: string; email: string; address: string; code?: string; contact?: string; }
 export interface SupplierCreatePayload { name: string; phone: string; email: string; address: string; code?: string; contact?: string; }

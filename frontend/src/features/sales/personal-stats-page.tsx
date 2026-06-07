@@ -2,6 +2,7 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { DollarSign, Package, TrendingUp } from 'lucide-react';
+import useSales from '@/hooks/useSales';
 
 const formatCurrency = (value: unknown) => {
   const rawValue = Array.isArray(value) ? value[0] : value;
@@ -15,12 +16,8 @@ const formatCurrency = (value: unknown) => {
 };
 
 export function PersonalStatsPage() {
-  const monthlyStats = [
-    { month: 'T1', revenue: 12000000, orders: 45 },
-    { month: 'T2', revenue: 15000000, orders: 52 },
-    { month: 'T3', revenue: 13500000, orders: 48 },
-    { month: 'T4', revenue: 18000000, orders: 62 },
-  ];
+  const { stats, statsLoading } = useSales();
+  const monthlyStats = (stats.revenueByMonth || []).map((r, idx) => ({ month: r.month, revenue: r.revenue, orders: (stats.ordersByMonth[idx] && stats.ordersByMonth[idx].orders) || 0 }));
 
   return (
     <div className="p-6">

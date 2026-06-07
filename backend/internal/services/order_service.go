@@ -48,7 +48,7 @@ func (s *OrderService) GetOrderByID(userID, id uint) (*dto.OrderResponse, error)
 	return &response, nil
 }
 
-// CreateOrder creates a new order with status Đã_bán and deducts inventory.
+// CreateOrder creates a new order, optionally creates a customer, and deducts inventory.
 func (s *OrderService) CreateOrder(userID uint, req *dto.OrderCreateRequest) (*dto.OrderResponse, error) {
 	if len(req.Items) == 0 {
 		return nil, errors.New("Đơn hàng phải có ít nhất một sản phẩm")
@@ -59,11 +59,6 @@ func (s *OrderService) CreateOrder(userID uint, req *dto.OrderCreateRequest) (*d
 	if req.Tax < 0 {
 		return nil, errors.New("Thuế không hợp lệ")
 	}
-	if req.CustomerID != nil {
-		if _, err := s.customerRepo.GetCustomerByID(*req.CustomerID); err != nil {
-			return nil, errors.New("Khách hàng không tồn tại")
-		}
-	}
 
 	items := normalizeOrderItems(req.Items)
 	if len(items) == 0 {
@@ -72,6 +67,57 @@ func (s *OrderService) CreateOrder(userID uint, req *dto.OrderCreateRequest) (*d
 
 	var createdOrderID uint
 	err := s.orderRepo.DB.Transaction(func(tx *gorm.DB) error {
+		// --- 1. XỬ LÝ KHÁCH HÀNG ---
+		var finalCustomerID *uint
+
+		if req.Customer != nil {
+			var existingCustomer models.Customer
+			if err := tx.Where("phone = ?", req.Customer.Phone).First(&existingCustomer).Error; err == nil {
+				// Use existing customer
+				finalCustomerID = &existingCustomer.ID
+				// Optionally update name/address/email if provided and different
+				updated := false
+				if req.Customer.Name != "" && existingCustomer.Name != req.Customer.Name {
+					existingCustomer.Name = req.Customer.Name
+					updated = true
+				}
+				if req.Customer.Address != "" && existingCustomer.Address != req.Customer.Address {
+					existingCustomer.Address = req.Customer.Address
+					updated = true
+				}
+				if updated {
+					if err := tx.Save(&existingCustomer).Error; err != nil {
+						return errors.New("Lỗi khi cập nhật thông tin khách hàng")
+					}
+				}
+			} else if errors.Is(err, gorm.ErrRecordNotFound) {
+				// Create new customer (generate a code)
+				code := "CUST" + time.Now().Format("20060102150405")
+				// ensure unique (very unlikely collision)
+				// assign fields
+				newCustomer := models.Customer{
+					Code:    code,
+					Name:    req.Customer.Name,
+					Phone:   req.Customer.Phone,
+					Address: req.Customer.Address,
+				}
+				if err := s.customerRepo.CreateCustomerWithDB(tx, &newCustomer); err != nil {
+					return errors.New("Lỗi khi tạo thông tin khách hàng mới")
+				}
+				finalCustomerID = &newCustomer.ID
+			} else {
+				return errors.New("Lỗi khi kiểm tra thông tin khách hàng")
+			}
+
+		} else if req.CustomerID != nil {
+			var existingCustomer models.Customer
+			if err := tx.First(&existingCustomer, *req.CustomerID).Error; err != nil {
+				return errors.New("Khách hàng không tồn tại")
+			}
+			finalCustomerID = req.CustomerID
+		}
+
+		// --- 2. TÍNH TOÁN VÀ TRỪ TỒN KHO ---
 		totalAmount := 0.0
 		orderItems := make([]models.OrderItem, 0, len(items))
 
@@ -106,13 +152,22 @@ func (s *OrderService) CreateOrder(userID uint, req *dto.OrderCreateRequest) (*d
 			})
 		}
 
+		// --- 3. TẠO ĐƠN HÀNG VỚI CUSTOMER ID CUỐI CÙNG ---
+		// Compute final amount: frontend sends discount as percentage (0-100)
+		finalAmount := totalAmount
+		if req.Discount > 0 {
+			// treat as percent
+			finalAmount = totalAmount*(1.0-(req.Discount/100.0))
+		}
+		finalAmount = finalAmount + req.Tax
+
 		order := &models.Order{
-			CustomerID:  req.CustomerID,
+			CustomerID:  finalCustomerID,
 			UserID:      userID,
 			TotalAmount: totalAmount,
 			Discount:    req.Discount,
 			Tax:         req.Tax,
-			FinalAmount: totalAmount - req.Discount + req.Tax,
+			FinalAmount: finalAmount,
 			Status:      "Đã_bán",
 		}
 
@@ -131,10 +186,12 @@ func (s *OrderService) CreateOrder(userID uint, req *dto.OrderCreateRequest) (*d
 
 		return nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
 
+	// --- 4. LẤY LẠI THÔNG TIN ORDER ĐỂ TRẢ VỀ ---
 	createdOrder, err := s.orderRepo.GetOrderByIDAndUserID(createdOrderID, userID)
 	if err != nil {
 		return nil, errors.New("Lỗi khi lấy đơn hàng vừa tạo")
@@ -224,7 +281,13 @@ func (s *OrderService) UpdateOrder(userID, id uint, req *dto.OrderUpdateRequest)
 		order.TotalAmount = totalAmount
 		order.Discount = req.Discount
 		order.Tax = req.Tax
-		order.FinalAmount = totalAmount - req.Discount + req.Tax
+		// treat Discount as percentage
+		updatedFinal := totalAmount
+		if req.Discount > 0 {
+			updatedFinal = totalAmount*(1.0-(req.Discount/100.0))
+		}
+		updatedFinal = updatedFinal + req.Tax
+		order.FinalAmount = updatedFinal
 
 		if err := s.orderRepo.UpdateOrderWithDB(tx, &order); err != nil {
 			return errors.New("Lỗi khi cập nhật đơn hàng")
@@ -335,6 +398,8 @@ func (s *OrderService) toOrderResponse(order *models.Order) dto.OrderResponse {
 
 	if order.Customer != nil {
 		response.CustomerName = order.Customer.Name
+		response.CustomerPhone = order.Customer.Phone
+		response.CustomerAddress = order.Customer.Address
 	}
 
 	items := make([]dto.OrderItemResponse, 0, len(order.OrderItems))

@@ -23,7 +23,7 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 
 func (r *ProductRepository) GetAllProductsByStore(storeID uint) ([]models.Product, error) {
 	var products []models.Product
-	result := r.DB.Preload("Category").Preload("Supplier").Joins("Inventory").
+	result := r.DB.Preload("Category").Preload("Supplier").Preload("Inventory").
 		Where("products.store_id = ?", storeID).
 		Order("products.id DESC").Find(&products)
 	return products, result.Error

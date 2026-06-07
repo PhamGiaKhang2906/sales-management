@@ -27,6 +27,10 @@ func SalesRoutes(r *gin.RouterGroup, db *gorm.DB) {
 			customers.DELETE("/:id", customerCtrl.DeleteCustomer)
 		}
 
+		// Expose limited product routes for sales users (search & view)
+		// Reuse the ProductRoutes registration but under /sales group
+		ProductRoutes(sales, db)
+
 		OrderRoutes(sales, db)
 	}
 }

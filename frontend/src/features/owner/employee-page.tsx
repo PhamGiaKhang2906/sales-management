@@ -60,10 +60,8 @@ export function EmployeesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // BƯỚC QUAN TRỌNG: Ánh xạ CHỮ từ Form thành SỐ trước khi đẩy xuống Backend
-      const finalRoleId = formData.role_name === 'warehouse' ? 3 : 2;
-
       // Tạo cục dữ liệu payload đúng chuẩn interface Backend cần
+      // Backend expects `role_name` (sales | warehouse)
       const apiPayload = {
         fullname: formData.fullname,
         username: formData.username,
@@ -74,7 +72,7 @@ export function EmployeesPage() {
         birthday: formData.birthday || null,
         salary_factor: formData.salary_factor,
         work_shift: formData.work_shift,
-        role_id: finalRoleId, // Gắn role_id bằng số vào đây
+        role_name: formData.role_name, // Gửi role bằng chuỗi như backend mong muốn
       };
 
       if (editingEmployee) {

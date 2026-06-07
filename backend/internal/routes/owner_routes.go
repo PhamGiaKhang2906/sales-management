@@ -61,4 +61,7 @@ func OwnerRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	CustomerRoutes(owner, db)
 	ProductRoutes(owner, db)
 	OrderRoutes(owner, db)
+	PurchaseOrderRoutes(owner, db)
+	// Register warehouse routes at the protected API level (not nested under /owner)
+	WarehouseRoutes(r, db)
 }

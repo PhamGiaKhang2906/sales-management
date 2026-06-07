@@ -34,7 +34,9 @@ export function ReturnOrdersPage() {
   useEffect(() => {
     // map fetchedOrders to OrderToReturn shape
     if (!fetchedOrders) return;
-    const mapped = (Array.isArray(fetchedOrders) ? fetchedOrders : (fetchedOrders.orders || fetchedOrders)).map((o: any) => ({
+    const raw: any = fetchedOrders;
+    const list = Array.isArray(raw) ? raw : (raw?.orders || raw);
+    const mapped = (list || []).map((o: any) => ({
       id: o.id,
       order_code: o.id ? `DH-${o.id}` : '',
       customer_id: o.customer_id || o.customer?.id || null,

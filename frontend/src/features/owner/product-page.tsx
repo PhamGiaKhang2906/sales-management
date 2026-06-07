@@ -156,6 +156,7 @@ export function ProductsPage() {
         Price: formData.price,
         Cost: formData.cost,
         Stock: formData.stock,
+        current_stock: formData.stock,
         CategoryID: formData.category_id,
         SupplierID: formData.supplier_id,
         Unit: formData.cost.toString(), // Truyền kèm phòng trường hợp Backend vẫn cần field này

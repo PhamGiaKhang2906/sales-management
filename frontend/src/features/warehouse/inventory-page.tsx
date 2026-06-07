@@ -12,6 +12,7 @@ import {
   ArrowUpCircle,
 } from 'lucide-react';
 import { useProducts, useSuppliers } from '@/hooks/useOwner';
+import { useWarehouse } from '@/hooks/useWarehouse';
 
 export function InventoryPage() {
   // State tìm kiếm
@@ -27,6 +28,7 @@ export function InventoryPage() {
   } = useProducts({ search: appliedSearch });
 
   const { suppliers } = useSuppliers();
+  const { dashboard } = useWarehouse();
 
   // State bộ lọc
   const [groupSearchText, setGroupSearchText] = useState('');
@@ -120,13 +122,19 @@ export function InventoryPage() {
               <Layers3 className="h-5 w-5 text-blue-600" />
               Bộ lọc kho
             </div>
-            <button
-              type="button"
-              onClick={handleSearchClick}
-              className="rounded-lg bg-slate-800 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900"
-            >
-              Lọc kho
-            </button>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-xs text-slate-500">Tổng tồn hiển thị</div>
+                <div className="font-semibold text-slate-900">{totalStock}</div>
+              </div>
+              <button
+                type="button"
+                onClick={handleSearchClick}
+                className="rounded-lg bg-slate-800 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900"
+              >
+                Lọc kho
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">

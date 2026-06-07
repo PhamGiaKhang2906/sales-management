@@ -15,6 +15,7 @@ export const authService = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
     return response.json();
@@ -26,6 +27,7 @@ export const authService = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
     return response.json();

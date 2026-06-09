@@ -117,9 +117,6 @@ export function LandingPage() {
 										<br />
 										theo cách rõ ràng hơn
 									</h1>
-									<p className="mt-6 max-w-lg text-lg leading-8 text-emerald-50/90">
-										Landing page được ghép từ phần hero ban đầu và các khối nội dung phía dưới. Nút Sản phẩm sẽ cuộn thẳng xuống đúng section sản phẩm.
-									</p>
 									<div className="mt-10 flex flex-wrap gap-3">
 										<a href="#products" className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 font-semibold text-white shadow-lg transition hover:bg-black">
 											Sản phẩm <ArrowRight className="h-4 w-4" />
@@ -138,10 +135,10 @@ export function LandingPage() {
 									Khang Sales Platform
 								</div>
 								<h2 className="text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-[3.65rem]">
-									Một nền tảng bán hàng gọn, sáng và dễ triển khai.
+									Một nền tảng bán hàng gọn, nhanh và dễ triển khai.
 								</h2>
 								<p className="mt-6 text-lg leading-8 text-slate-600">
-									Giao diện được thiết kế để cuộn tự nhiên từ phần giới thiệu đến các nhóm sản phẩm, tiện ích và đăng ký dùng thử.
+									Được thiết kế để giúp các chủ cửa hàng và đội ngũ bán hàng quản lý hiệu quả hơn, tiết kiệm thời gian và chi phí vận hành.
 								</p>
 
 								<div className="mt-10 flex flex-wrap justify-center gap-3 lg:justify-start">
@@ -212,7 +209,7 @@ export function LandingPage() {
 				<section id="utilities" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
 					<div className="text-center">
 						<h3 className="text-2xl font-bold text-slate-900 sm:text-3xl">Tiện ích nổi bật</h3>
-						<p className="mt-3 text-slate-600">5 tiện ích theo tinh thần logo Khang bạn gửi: CONNECT, SMART, FAST, MANAGE, GROWTH.</p>
+						<p className="mt-3 text-slate-600">Khám phá những tính năng giúp bạn quản lý kinh doanh hiệu quả hơn</p>
 					</div>
 
 					<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
@@ -237,11 +234,11 @@ export function LandingPage() {
 						<div className="max-w-3xl">
 							<div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold">
 								<CircleDollarSign className="h-4 w-4" />
-								KiotViệt - Giải pháp kinh doanh toàn diện
+								<span>Miễn phí dùng thử 7 ngày</span>
 							</div>
-							<h3 className="mt-5 text-3xl font-bold sm:text-4xl">Bắt đầu từ landing page, sau đó đi vào đăng ký và đăng nhập</h3>
+							<h3 className="mt-5 text-3xl font-bold sm:text-4xl">Hỗ trợ 24/7</h3>
 							<p className="mt-4 max-w-2xl text-lg leading-8 text-white/85">
-								Landing page, trang đăng ký và trang đăng nhập đã được nối cùng một ngôn ngữ thiết kế, có thể mở rộng thêm dữ liệu thật sau này.
+								Đội ngũ hỗ trợ tận tâm luôn sẵn sàng giúp bạn giải đáp mọi thắc mắc và đảm bảo trải nghiệm tốt nhất với Khang Sales Platform.
 							</p>
 						</div>
 

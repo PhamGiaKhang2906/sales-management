@@ -52,7 +52,7 @@ export function LoginPage() {
                 Bán hàng đơn giản
               </h1>
               <p className="text-lg leading-8 text-emerald-50/90">
-                Hệ thống hỗ trợ đăng nhập, quản lý và theo dõi sản phẩm theo vai trò. Giao diện sáng, rõ, dễ thao tác cho từng bộ phận.
+                Hệ thống hỗ trợ đăng nhập, quản lý và theo dõi sản phẩm theo vai trò, giúp bạn dễ dàng quản lý cửa hàng và đội ngũ bán hàng hiệu quả hơn.
               </p>
             </div>
 
@@ -60,7 +60,7 @@ export function LoginPage() {
               {[
                 'Đơn giản & nhanh',
                 'Bảo mật tài khoản',
-                'Dùng cho nhiều vai trò',
+                'Quản lý sản phẩm hiệu quả ',
               ].map((item) => (
                 <div key={item} className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-medium text-white/90 backdrop-blur-sm">
                   {item}
